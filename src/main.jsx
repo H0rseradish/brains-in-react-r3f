@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import './global.css' 
 import { Canvas } from '@react-three/fiber'
 import App from './App.jsx'
-import AppNoDrei from './AppNoDrei.jsx'
+// import AppNoDrei from './AppNoDrei.jsx'
 
 
 
