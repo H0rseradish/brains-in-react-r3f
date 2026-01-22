@@ -1,4 +1,4 @@
-
+// This was made to exclude Drei as the culprit for the bug where if the angle goes below or above, (not sure which!!!)perpendicular then the pixels spread downwards from the base of the model.
 // import { OrthographicCamera, OrbitControls } from "@react-three/drei";
 import { useRef } from "react";
 import { OrthographicCamera } from "three";

@@ -1,4 +1,4 @@
-// Code from https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js and separated out into fragment.glsl
+// Code from https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js and separated out into fragment.glsl`
 
 precision highp float;
 precision mediump sampler3D;
@@ -6,7 +6,7 @@ precision mediump sampler3D;
 uniform vec3 u_size;
 uniform int u_renderstyle;
 uniform float u_renderthreshold;
-uniform vec2 u_clim;
+uniform vec2 uColorMapLimits;
 
 uniform sampler3D u_data;
 uniform sampler2D u_cmdata;
@@ -85,7 +85,7 @@ float sample1(vec3 texcoords) {
 
 
 vec4 apply_colormap(float val) {
-    val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);
+    val = (val - uColorMapLimits[0]) / (uColorMapLimits[1] - uColorMapLimits[0]);
     return texture2D(u_cmdata, vec2(val, 0.5));
 }
 
@@ -133,7 +133,7 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
     vec3 dstep = 1.5 / u_size;	// step to sample derivative
     vec3 loc = start_loc;
 
-    float low_threshold = u_renderthreshold - 0.02 * (u_clim[1] - u_clim[0]);
+    float low_threshold = u_renderthreshold - 0.02 * (uColorMapLimits[1] - uColorMapLimits[0]);
 
     // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
     // non-constant expression. So we use a hard-coded max, and an additional condition

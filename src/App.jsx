@@ -14,7 +14,7 @@ export default function App()
         top: h / 2,
         bottom: - h / 2,
         near: 1,
-        far: 1000
+        far: 500
     }
 
     return <>
@@ -22,9 +22,10 @@ export default function App()
             makeDefault 
             args={ [orthographicCameraSettings] }
 
-            // z is how far the camera goes through the skull....:
-            //so this will need to change according to the user but I think not in here.. would be very costly???:
-            position={ [ -64, - 64, 64 ] }
+            //so this will need to change according to the user but I think not in here????.. would be very costly???:
+            position={ [ 0, 128, -8 ] }
+        
+            //this up value affects the orbit controls...!
             up={ [ 0, 0, 1 ] }
         />
         <OrbitControls />
