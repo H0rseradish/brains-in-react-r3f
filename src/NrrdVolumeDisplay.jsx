@@ -5,14 +5,13 @@ import { useMemo, useEffect, useState, useRef } from "react";
 import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, TextureLoader, BackSide, UniformsUtils } from "three";
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
 // Will try to use shaders locally instead of this so that can adapt them?
-import { VolumeRenderShader1 } from "three/examples/jsm/Addons.js";
+// import { VolumeRenderShader1 } from "three/examples/jsm/Addons.js";
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
 
 import brainVolumeVertexShader from './shaders/brainVolume/vertex.glsl'
 import brainVolumeFragmentShader from './shaders/brainVolume/fragment.glsl'
 //ah I needed a vite glsl plugin...!!
 // console.log(brainVolumeFragmentShader)
-
 
 
 export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL } ) 
@@ -42,14 +41,17 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL } )
     // same for uniforms as for colorMap: the clue is 'UNIFORM'!!!
     const uniforms = useMemo(() => (
     {
+        
         // nb doing this Vector2() here means must use set() elsewhere so am not re-creating vectors:
-        uColorMapLimits: { value: new Vector2(0, 2) }, // colormap thing - RENAMED!
+        //the colorMapValueRange: might be worth putting in a gui and changing it so can diffrentiate betqween surfaces... or would that be a calculation based on the when there is clear space in the data ie 
+        uColorMapValueRange: { value: new Vector2(0, 2) }, // colormap thing - 'clim' RENAMED!
         //nb used null because am re-creating the vectors elsewhere:
-        u_cmdata: { value: null }, // cm_data is colormap too... - RENAME?
-        u_data: { value: null }, // Should be aData3DTexture, as in the actual MRI texture - RENAME?
-        u_renderstyle: { value: 1 }, // 1 is ISO ...can I get rid? See shader. Will I ever need mip????
-        u_renderthreshold: { value: 0.15 }, //not sure....
-        u_size: { value: new Vector3() }, // the volume size('lengths')
+        uColorMapTexture: { value: null }, // cm_data is colormap too... - RENAMED!
+        uVolumeDataTexture: { value: null }, // Should be aData3DTexture, as in the actual MRI texture - RENAME?
+        // u_renderstyle: { value: 1 }, // 1 is ISO ...can I get rid? YES.. Will I ever need mip???? If so it would be in separate shader anyway.
+        // Ok this is the ISO threshold which defines the intensity level at which a surface exists:
+        uIsoSurfaceThreshold: { value: 0.15 }, //not sure....
+        uVolumeSize: { value: new Vector3() }, // the volume size('lengths')
 
     }), [])
     
@@ -91,18 +93,18 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL } )
         // remember do not use the React state inside the thing that sets it!!!!!
         // u_clim is a colormap thing - RENAME?
         // uniforms.u_clim.value.set (0, 2);
-        // cm_data is colormap too... - RENAME?
-        uniforms.u_cmdata.value = colorMapTexture; // Should be Texture
+        // cm_data is colormap too... - RENAME YES?
+        uniforms.uColorMapTexture.value = colorMapTexture; // Should be Texture
 
          // Should be Data3DTexture, as in the actual MRI texture - RENAME?
-        uniforms.u_data.value = texture;
+        uniforms.uVolumeDataTexture.value = texture;
         
         //get rid because it will always be iso? 
         // uniforms.u_renderstyle.value = 1; // 1 is iso rendering, 0 is mip
 
         // uniforms.u_renderthreshold.value = 0.15; 
         //because this needs to be passed to shaders
-        uniforms.u_size.value.set(volume.xLength, volume.yLength, volume.zLength) ; //so a Vector3
+        uniforms.uVolumeSize.value.set(volume.xLength, volume.yLength, volume.zLength) ; //so a Vector3
 
         // console.log(uniforms)
         // setUniforms(uniforms);
@@ -124,7 +126,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL } )
         <>
             <mesh 
                 ref={ brainModel }
-                // centre the mesh: better elsewhere though? in the vertex??
+                // centre the mesh: better elsewhere though? in the vertex?? 
                 position={ [ volumeXLength * - 0.5, volumeYLength * - 0.5, volumeZLength * - 0.5 ] } 
                 // rotation={ [ 0, 0, Math.PI * 0.25] }
             >

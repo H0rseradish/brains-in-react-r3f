@@ -3,17 +3,17 @@
 precision highp float;
 precision mediump sampler3D;
 
-uniform vec3 u_size;
-uniform int u_renderstyle;
-uniform float u_renderthreshold;
-uniform vec2 uColorMapLimits;
+uniform vec3 uVolumeSize;
+// uniform int u_renderstyle;
+uniform float uIsoSurfaceThreshold;
+uniform vec2 uColorMapValueRange;
 
-uniform sampler3D u_data;
-uniform sampler2D u_cmdata;
+uniform sampler3D uVolumeDataTexture;
+uniform sampler2D uColorMapTexture;
 
-varying vec3 v_position;
-varying vec4 v_nearpos;
-varying vec4 v_farpos;
+varying vec3 vPosition;
+varying vec4 vNearPosition;
+varying vec4 vFarPosition;
 
 // The maximum distance through our rendering volume is sqrt(3).
 const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
@@ -24,7 +24,7 @@ const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
 const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
 const float shininess = 40.0;
 
-void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
+// void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
 void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
 
 float sample1(vec3 texcoords);
@@ -34,25 +34,25 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
 void main() {
     // Normalize clipping plane info
-    vec3 farpos = v_farpos.xyz / v_farpos.w;
-    vec3 nearpos = v_nearpos.xyz / v_nearpos.w;
+    vec3 farpos = vFarPosition.xyz / vFarPosition.w;
+    vec3 nearpos = vNearPosition.xyz / vNearPosition.w;
 
     // Calculate unit vector pointing in the view direction through this fragment.
     vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);
 
     // Compute the (negative) distance to the front surface or near clipping plane.
-    // v_position is the back face of the cuboid, so the initial distance calculated in the dot
+    // vPosition is the back face of the cuboid, so the initial distance calculated in the dot
     // product below is the distance from near clip plane to the back of the cuboid
-    float distance = dot(nearpos - v_position, view_ray);
-    distance = max(distance, min((-0.5 - v_position.x) / view_ray.x,
-                                                            (u_size.x - 0.5 - v_position.x) / view_ray.x));
-    distance = max(distance, min((-0.5 - v_position.y) / view_ray.y,
-                                                            (u_size.y - 0.5 - v_position.y) / view_ray.y));
-    distance = max(distance, min((-0.5 - v_position.z) / view_ray.z,
-                                                            (u_size.z - 0.5 - v_position.z) / view_ray.z));
+    float distance = dot(nearpos - vPosition, view_ray);
+    distance = max(distance, min((-0.5 - vPosition.x) / view_ray.x,
+                                                            (uVolumeSize.x - 0.5 - vPosition.x) / view_ray.x));
+    distance = max(distance, min((-0.5 - vPosition.y) / view_ray.y,
+                                                            (uVolumeSize.y - 0.5 - vPosition.y) / view_ray.y));
+    distance = max(distance, min((-0.5 - vPosition.z) / view_ray.z,
+                                                            (uVolumeSize.z - 0.5 - vPosition.z) / view_ray.z));
 
     // Now we have the starting position on the front surface
-    vec3 front = v_position + view_ray * distance;
+    vec3 front = vPosition + view_ray * distance;
 
     // Decide how many steps to take
     int nsteps = int(-distance / relative_step_size + 0.5);
@@ -60,18 +60,19 @@ void main() {
             discard;
 
     // Get starting location and step vector in texture coordinates
-    vec3 step = ((v_position - front) / u_size) / float(nsteps);
-    vec3 start_loc = front / u_size;
+    vec3 step = ((vPosition - front) / uVolumeSize) / float(nsteps);
+    vec3 start_loc = front / uVolumeSize;
 
     // For testing: show the number of steps. This helps to establish
     // whether the rays are correctly oriented
-    //'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / u_size.x, 1.0, 1.0);
+    //'gl_FragColor = vec4(0.0, float(nsteps) / 1.0 / uVolumeSize.x, 1.0, 1.0);
     //'return;
 
-    if (u_renderstyle == 0)
-            cast_mip(start_loc, step, nsteps, view_ray);
-    else if (u_renderstyle == 1)
-            cast_iso(start_loc, step, nsteps, view_ray);
+    // Unlikely to ever need this (mip)- if I did should be in a separate shader anyway:
+    // if (u_renderstyle == 0)
+    //         cast_mip(start_loc, step, nsteps, view_ray);
+    // else if (u_renderstyle == 1)
+    cast_iso(start_loc, step, nsteps, view_ray);
 
     if (gl_FragColor.a < 0.05)
             discard;
@@ -80,13 +81,14 @@ void main() {
 
 float sample1(vec3 texcoords) {
     /* Sample float value from a 3D texture. Assumes intensity data. */
-    return texture(u_data, texcoords.xyz).r;
+    return texture(uVolumeDataTexture, texcoords.xyz).r;
 }
 
-
+// Apply the colorMap
 vec4 apply_colormap(float val) {
-    val = (val - uColorMapLimits[0]) / (uColorMapLimits[1] - uColorMapLimits[0]);
-    return texture2D(u_cmdata, vec2(val, 0.5));
+    // Normalize/clamp min/max values to 0.0 and 1.0? before applying the colorMap:
+    val = (val - uColorMapValueRange[0]) / (uColorMapValueRange[1] - uColorMapValueRange[0]);
+    return texture2D(uColorMapTexture, vec2(val, 0.5));
 }
 
 
@@ -130,10 +132,10 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
 
     gl_FragColor = vec4(0.0);	// init transparent
     vec4 color3 = vec4(0.0);	// final color
-    vec3 dstep = 1.5 / u_size;	// step to sample derivative
+    vec3 dstep = 1.5 / uVolumeSize;	// step to sample derivative
     vec3 loc = start_loc;
 
-    float low_threshold = u_renderthreshold - 0.02 * (uColorMapLimits[1] - uColorMapLimits[0]);
+    float low_threshold = uIsoSurfaceThreshold - 0.02 * (uColorMapValueRange[1] - uColorMapValueRange[0]);
 
     // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
     // non-constant expression. So we use a hard-coded max, and an additional condition
@@ -151,7 +153,7 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
                     vec3 istep = step / float(REFINEMENT_STEPS);
                     for (int i=0; i<REFINEMENT_STEPS; i++) {
                             val = sample1(iloc);
-                            if (val > u_renderthreshold) {
+                            if (val > uIsoSurfaceThreshold) {
                                     gl_FragColor = add_lighting(val, iloc, dstep, view_ray);
                                     return;
                             }
