@@ -15,47 +15,65 @@ varying vec3 vPosition;
 varying vec4 vNearPosition;
 varying vec4 vFarPosition;
 
+#include ../includes/constants.glsl
+
+// Moved into includes:
 // The maximum distance through our rendering volume is sqrt(3).
-const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
-const int REFINEMENT_STEPS = 4;
-const float relative_step_size = 1.0;
-const vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
-const vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
-const vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
-const float shininess = 40.0;
+// const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
+// const int REFINEMENT_STEPS = 4;
+// const float RELATIVE_STEP_SIZE = 1.0;
 
+//---------------
+// These can come in as uniforms or not at all ?:
+// they are overidden in the lighting function anyway, so...
+vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
+vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
+vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
+float shininess = 40.0;
+
+
+
+// Functions are declared BEFORE use because order matters - maybe move the actual definitions above void main to be Bruno-esque??) and RENAME also. OR as includes???
+// Do not need MIP stuff:
 // void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
-void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray);
-
-float sample1(vec3 texcoords);
+void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray); // RENAME!
+float sample1(vec3 texcoords); // RENAME!
 vec4 apply_colormap(float val);
 vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray);
 
 
+
 void main() {
     // Normalize clipping plane info
-    vec3 farpos = vFarPosition.xyz / vFarPosition.w;
-    vec3 nearpos = vNearPosition.xyz / vNearPosition.w;
+    vec3 farPosition = vFarPosition.xyz / vFarPosition.w;
+    vec3 nearPosition = vNearPosition.xyz / vNearPosition.w;
 
     // Calculate unit vector pointing in the view direction through this fragment.
-    vec3 view_ray = normalize(nearpos.xyz - farpos.xyz);
+    vec3 view_ray = normalize(nearPosition.xyz - farPosition.xyz);
 
     // Compute the (negative) distance to the front surface or near clipping plane.
     // vPosition is the back face of the cuboid, so the initial distance calculated in the dot
     // product below is the distance from near clip plane to the back of the cuboid
-    float distance = dot(nearpos - vPosition, view_ray);
-    distance = max(distance, min((-0.5 - vPosition.x) / view_ray.x,
-                                                            (uVolumeSize.x - 0.5 - vPosition.x) / view_ray.x));
-    distance = max(distance, min((-0.5 - vPosition.y) / view_ray.y,
-                                                            (uVolumeSize.y - 0.5 - vPosition.y) / view_ray.y));
-    distance = max(distance, min((-0.5 - vPosition.z) / view_ray.z,
-                                                            (uVolumeSize.z - 0.5 - vPosition.z) / view_ray.z));
+    float distance = dot(nearPosition - vPosition, view_ray);
+
+    distance = max(
+        distance, 
+        min(
+            (- 0.5 - vPosition.x) / view_ray.x,
+            (uVolumeSize.x - 0.5 - vPosition.x) / view_ray.x
+        )
+    );
+
+    distance = max(distance, min((- 0.5 - vPosition.y) / view_ray.y,
+        (uVolumeSize.y - 0.5 - vPosition.y) / view_ray.y));
+    distance = max(distance, min((- 0.5 - vPosition.z) / view_ray.z,
+        (uVolumeSize.z - 0.5 - vPosition.z) / view_ray.z));
 
     // Now we have the starting position on the front surface
     vec3 front = vPosition + view_ray * distance;
 
     // Decide how many steps to take
-    int nsteps = int(-distance / relative_step_size + 0.5);
+    int nsteps = int(- distance / RELATIVE_STEP_SIZE + 0.5);
     if ( nsteps < 1 )
             discard;
 
@@ -72,6 +90,8 @@ void main() {
     // if (u_renderstyle == 0)
     //         cast_mip(start_loc, step, nsteps, view_ray);
     // else if (u_renderstyle == 1)
+
+    // Then Raycast ISO:
     cast_iso(start_loc, step, nsteps, view_ray);
 
     if (gl_FragColor.a < 0.05)
@@ -91,41 +111,46 @@ vec4 apply_colormap(float val) {
     return texture2D(uColorMapTexture, vec2(val, 0.5));
 }
 
+// MIP - not needed, and if it becomes needed should put in a separate shader:
+// void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
 
-void cast_mip(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
+//     float max_val = -1e6;
+//     int max_i = 100;
+//     vec3 loc = start_loc;
 
-    float max_val = -1e6;
-    int max_i = 100;
-    vec3 loc = start_loc;
+//     // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
+//     // non-constant expression. So we use a hard-coded max, and an additional condition
+//     // inside the loop.
+//     for (int iter = 0; iter < MAX_STEPS; iter++) {
+//             if (iter >= nsteps)
+//                     break;
+//             // Sample from the 3D texture
+//             float val = sample1(loc);
+//             // Apply MIP operation
+//             if (val > max_val) {
+//                     max_val = val;
+//                     max_i = iter;
+//             }
+//             // Advance location deeper into the volume
+//             loc += step;
+//     }
 
-    // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
-    // non-constant expression. So we use a hard-coded max, and an additional condition
-    // inside the loop.
-    for (int iter=0; iter<MAX_STEPS; iter++) {
-            if (iter >= nsteps)
-                    break;
-            // Sample from the 3D texture
-            float val = sample1(loc);
-            // Apply MIP operation
-            if (val > max_val) {
-                    max_val = val;
-                    max_i = iter;
-            }
-            // Advance location deeper into the volume
-            loc += step;
-    }
+//     // Refine location, gives crispier images
+//     vec3 iloc = start_loc + step * (float(max_i) - 0.5);
+//     vec3 istep = step / float(REFINEMENT_STEPS);
+//     for (int i = 0; i < REFINEMENT_STEPS; i++) {
+//             max_val = max(max_val, sample1(iloc));
+//             iloc += istep;
+//     }
 
-    // Refine location, gives crispier images
-    vec3 iloc = start_loc + step * (float(max_i) - 0.5);
-    vec3 istep = step / float(REFINEMENT_STEPS);
-    for (int i=0; i<REFINEMENT_STEPS; i++) {
-            max_val = max(max_val, sample1(iloc));
-            iloc += istep;
-    }
+//     // Resolve final color
+//     gl_FragColor = apply_colormap(max_val);
+// }
 
-    // Resolve final color
-    gl_FragColor = apply_colormap(max_val);
-}
+
+/*
+* ISO Raycasting
+*/
 
 
 void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
@@ -140,7 +165,7 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
     // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
     // non-constant expression. So we use a hard-coded max, and an additional condition
     // inside the loop.
-    for (int iter=0; iter<MAX_STEPS; iter++) {
+    for (int iter = 0; iter < MAX_STEPS; iter++) {
             if (iter >= nsteps)
                     break;
 
@@ -151,7 +176,7 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
                     // Take the last interval in smaller steps
                     vec3 iloc = loc - 0.5 * step;
                     vec3 istep = step / float(REFINEMENT_STEPS);
-                    for (int i=0; i<REFINEMENT_STEPS; i++) {
+                    for (int i = 0; i < REFINEMENT_STEPS; i++) {
                             val = sample1(iloc);
                             if (val > uIsoSurfaceThreshold) {
                                     gl_FragColor = add_lighting(val, iloc, dstep, view_ray);
@@ -167,6 +192,10 @@ void cast_iso(vec3 start_loc, vec3 step, int nsteps, vec3 view_ray) {
 }
 
 
+/* 
+Lighting
+*/
+
 vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
 {
     // Calculate color by incorporating lighting
@@ -177,6 +206,7 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     // calculate normal vector from gradient
     vec3 N;
     float val1, val2;
+
     val1 = sample1(loc + vec3(-step[0], 0.0, 0.0));
     val2 = sample1(loc + vec3(+step[0], 0.0, 0.0));
     N[0] = val1 - val2;
@@ -203,9 +233,9 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);
 
     // note: could allow multiple lights
-    for (int i=0; i<1; i++)
+    for (int i = 0; i < 1; i++)
     {
-                // Get light direction (make sure to prevent zero division)
+            // Get light direction (make sure to prevent zero division)
             vec3 L = normalize(view_ray);	//lightDirs[i];
             float lightEnabled = float( length(L) > 0.0 );
             L = normalize(L + (1.0 - lightEnabled));
@@ -227,6 +257,7 @@ vec4 add_lighting(float val, vec3 loc, vec3 step, vec3 view_ray)
     // Calculate final color by componing different components
     vec4 final_color;
     vec4 color = apply_colormap(val);
+
     final_color = color * (ambient_color + diffuse_color) + specular_color;
     final_color.a = color.a;
 
