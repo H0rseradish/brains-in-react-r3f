@@ -14,9 +14,9 @@ export default function App()
         top: h / 2,
         bottom: - h / 2,
         near: 1,
-        far: 500
+        far: 1000
     }
-
+    
     return <>
         <OrthographicCamera 
             makeDefault 
@@ -25,10 +25,11 @@ export default function App()
             //so this will need to change according to the user but I think not in here????.. would be very costly???:
             position={ [ 0, 128, -8 ] }
         
-            //this up value affects the orbit controls...!
+            //this up value affects how the orbit controls work... ie which way round:
             up={ [ 0, 0, 1 ] }
         />
-        <OrbitControls />
+        <OrbitControls    
+        />
 
         <NrrdVolumeDisplay nrrdUrl="./MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
         
