@@ -16,30 +16,39 @@ varying vec4 vNearPosition;
 varying vec4 vFarPosition;
 
 #include ../includes/constants.glsl
-// Moved constants into includes
-
+#include ../includes/sampleVolume.glsl
+#include ../includes/applyColorMap.glsl
 
 
 //---------------
 // These can come in as uniforms or not at all ?:
 // they are overidden in the lighting function anyway, so...?
-vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
-vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
-vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
+// vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
+// vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
+// vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
+// Still need this one though... or would it be better elsewhere???
 float shininess = 40.0;
 
 
 // Functions are declared BEFORE use because order matters - maybe move the actual definitions above void main to be Bruno-esque??) and RENAME also. OR as includes???
-// Do not need MIP stuff:
-// void cast_mip(vec3 rayStartTextureCoords, vec3 step, int stepCount, vec3 viewRayDirection);
-// rayStepTextureCoords??
-void raycastIsoSurface(vec3 rayStartTextureCoords, vec3 rayStep, int stepCount, vec3 viewRayDirection); 
-float sampleVolume(vec3 texcoords); 
-vec4 applyColorMap(float val);
+
+void raycastIsoSurface(vec3 rayStartVolumeCoords, vec3 rayStep, int stepCount, vec3 viewRayDirection); 
+
+// float sampleVolume(vec3 volumeCoords); 
+
+// vec4 applyColorMap(float val);
+
 vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection);
 
 
+
+
 void main() {
+
+    /*
+    ** THE SETUP
+    */ 
+
     // Normalize clipping plane info
     vec3 farPosition = vFarPosition.xyz / vFarPosition.w;
     vec3 nearPosition = vNearPosition.xyz / vNearPosition.w;
@@ -48,13 +57,13 @@ void main() {
     vec3 viewRayDirection = normalize(nearPosition.xyz - farPosition.xyz);
 
     // Compute the (negative) distance to the front surface or near clipping plane.
-    // vPosition is the back face of the cuboid, so the initial distance calculated in the dot
-    // product below is the distance from near clip plane to the back of the cuboid
-    // RENAMED to rayEntryDistance?? (especially because distance() is actually a function!!!!)
+    // vPosition is the back face of the cuboid,(??) so the initial distance calculated in the dot: the distance from near clip plane to the back of the cuboid
+
+    // 1. 
+    // this is the distance along the ray from position to the near clipping plane:
     float rayEntryDistance = dot(nearPosition - vPosition, viewRayDirection);
-
-
-    //get rid of all the -0.5s - they are confusing the issue YES THEY WERE!!! centering now happens in the vertex.
+    // ...so this is a starting point.... it's further refined in the next 3 reassignments. This is reassigning to progressively compute all the cases, ie find the latest of the (earliest) entry points:
+    // 2. entry after the x
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -63,7 +72,7 @@ void main() {
             (uVolumeSize.x  - vPosition.x) / viewRayDirection.x
         )
     );
-
+    // 3. entry after the x
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -71,7 +80,7 @@ void main() {
             (uVolumeSize.y  - vPosition.y) / viewRayDirection.y
         )
     );
-
+    // 3. entry after the x
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -79,9 +88,9 @@ void main() {
         (uVolumeSize.z  - vPosition.z) / viewRayDirection.z)
     );
 
-    // Now we have the starting position on the front surface
+    // So can now find the starting position on the front surface
     //RENAME to rayEntryPosition? front on its own doesnt mean much?
-    vec3 front = vPosition + viewRayDirection * rayEntryDistance;
+    vec3 rayEntryPosition = vPosition + viewRayDirection * rayEntryDistance;
 
     // Decide how many steps to take
     int stepCount = int(- rayEntryDistance / RELATIVE_STEP_SIZE + 0.5);
@@ -89,82 +98,101 @@ void main() {
             discard;
 
     // Get starting location and step vector in texture coordinates
-    vec3 rayStep = ((vPosition - front) / uVolumeSize) / float(stepCount);
-    vec3 rayStartTextureCoords = front / uVolumeSize;
+    vec3 rayStep = ((vPosition - rayEntryPosition) / uVolumeSize) / float(stepCount);
+    vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeSize;
 
     // For testing: show the number of steps. This helps to establish
     // whether the rays are correctly oriented
     //'gl_FragColor = vec4(0.0, float(stepCount) / 1.0 / uVolumeSize.x, 1.0, 1.0);
     //'return;
 
-    // Then Raycast ISO:
-    raycastIsoSurface(rayStartTextureCoords, rayStep, stepCount, viewRayDirection);
+    /*
+    ** THE SAMPLING - separated out of the raycasting??????
+    */ 
 
+
+    /*
+    ** THE RAYCASTING
+    */ 
+    // Then Raycast ISO:
+    raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection);
+
+    // raycastIsoSurface1(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection);
+
+    /*
+    ** THE SHADING
+    */ 
+    // If the ray isn't false:
+    // Change to if the casting function returns true then add all the shading to the FragColor???
+
+    // apply COLORMAP
+
+    // add LIGHTING
+    // gl_FragColor = addLighting(val, refineVolumeCoords, dstep, viewRayDirection);
+
+    // FINAL COLOR
     if (gl_FragColor.a < 0.05)
             discard;
 }
 
 /* 
-* FUNCTIONS
+* FUNCTIONS to separate out???
 */
 
 
-
-// Sample the volume (aka pick from the texture??):
-float sampleVolume(vec3 texcoords)
-{
-    /* Sample float value from a 3D texture. Assumes intensity data. */
-    return texture(uVolumeDataTexture, texcoords.xyz).r;
-}
-
-// function to apply the colorMap
-vec4 applyColorMap(float val) 
-{
-    // Normalize/clamp min/max values to 0.0 and 1.0? before applying the colorMap:
-    val = (val - uColorMapValueRange[0]) / (uColorMapValueRange[1] - uColorMapValueRange[0]);
-    return texture2D(uColorMapTexture, vec2(val, 0.5));
-}
+// // Sample the volume 
+// float sampleVolume(vec3 volumeCoords)
+// {
+//     /* Sample float value from a 3D texture. Assumes intensity data. */
+//     return texture(uVolumeDataTexture, volumeCoords.xyz).r;
+// }
 
 
 /*
 * ISO Raycasting
 */
 
-
-void raycastIsoSurface(vec3 rayStartTextureCoords, vec3 rayStep, int stepCount, vec3 viewRayDirection) 
+//so raycasting finds a hit, shading uses the hit 
+//so this function should just be about finding the hits?
+//so it actually just determines  whether each fragment is a surface (and currently colors and lights it if it is!!!!!! ) So it needs to be a boolean and then if its true can do FragColor addLighting! AND IT NEEDS TO RETURN DATA on the hit.
+void raycastIsoSurface(vec3 rayStartVolumeCoords, vec3 rayStep, int stepCount, vec3 viewRayDirection) 
 {
     gl_FragColor = vec4(0.0);	// init transparent
     vec4 color3 = vec4(0.0);	// final color
     vec3 dstep = 1.5 / uVolumeSize;	// step to sample derivative
-    vec3 loc = rayStartTextureCoords;
+    vec3 currentVolumeCoords = rayStartVolumeCoords;
 
+    //what is this 0.02 ????
     float low_threshold = uIsoSurfaceThreshold - 0.02 * (uColorMapValueRange[1] - uColorMapValueRange[0]);
 
-    // Enter the raycasting loop. In WebGL 1 the loop index cannot be compared with
-    // non-constant expression. So we use a hard-coded max, and an additional condition
-    // inside the loop.
+    // Enter the raycasting loop. 
+    // NB In WebGL 1 the loop index cannot be compared with a non-constant expression. So we use a hard-coded max, and an additional condition inside the loop.
     for (int iter = 0; iter < MAX_STEPS; iter++) {
-            if (iter >= stepCount)
-                    break;
+        if (iter >= stepCount)
+            break;
+        // the volume is a scalar field, ie, at every point thesere is a single number stored (representing intensity, or density)
+        // Sample from the 3D texture to get the scalarValue:
+        float scalarValue = sampleVolume(currentVolumeCoords);
 
-            // Sample from the 3D texture
-            float val = sampleVolume(loc);
+        if (scalarValue > low_threshold) {
+            // Take the last interval in smaller steps
+            vec3 refineVolumeCoords = currentVolumeCoords - 0.5 * rayStep;
+            vec3 refineStep = rayStep / float(REFINEMENT_STEPS);
+            for (int i = 0; i < REFINEMENT_STEPS; i++) {
+                scalarValue = sampleVolume(refineVolumeCoords);
+                
 
-            if (val > low_threshold) {
-                    // Take the last interval in smaller steps
-                    vec3 iloc = loc - 0.5 * rayStep;
-                    vec3 istep = rayStep / float(REFINEMENT_STEPS);
-                    for (int i = 0; i < REFINEMENT_STEPS; i++) {
-                            val = sampleVolume(iloc);
-                            if (val > uIsoSurfaceThreshold) {
-                                    gl_FragColor = addLighting(val, iloc, dstep, viewRayDirection);
-                                    return;
-                            }
-                            iloc += istep;
-                    }
+                if (scalarValue > uIsoSurfaceThreshold) {
+                    //so... this addLighting needs to happen in main, so this needs to just return true - wait, the parameters come from from this function. - and I can only return one thing from a glsl function??
+                    //this is where 'out' comes in.... 
+                    gl_FragColor = addLighting(scalarValue, refineVolumeCoords, dstep, viewRayDirection);
+                    return;
+                }
+                refineVolumeCoords += refineStep;
             }
-            // Advance location deeper into the volume
-            loc += rayStep;
+        }
+        // Advance location (currentVolumeCoords) deeper into the volume
+        currentVolumeCoords += rayStep;
     }
 }
 
@@ -226,17 +254,29 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection)
             float mask1 = lightEnabled;
 
             // Calculate colors
-            ambient_color +=	mask1 * ambient_color;	// * gl_LightSource[i].ambient;
-            diffuse_color +=	mask1 * lambertTerm;
+            ambient_color += mask1 * ambient_color;	// * gl_LightSource[i].ambient;
+            diffuse_color += mask1 * lambertTerm;
             specular_color += mask1 * specularTerm * specular_color;
     }
 
     // Calculate final color by componing different components
-    vec4 final_color;
-    vec4 color = applyColorMap(val);
+    vec4 final_lighting;
+    // so would just return this if not applying colormap in the lighting function?
 
-    final_color = color * (ambient_color + diffuse_color) + specular_color;
-    final_color.a = color.a;
+
+
+    // apply the colorMap, passing in val from (the raycasting???) the includes is in the fragment...
+    // wait it must be better to separate this from lighting???
+    vec4 colorMap = applyColorMap(val);
+
+    //thses are actually the shadow variables...
+    // final_lighting = colorMap * (ambient_color + diffuse_color) + specular_color;
+
+    final_lighting =(ambient_color + diffuse_color) + specular_color;
+
+    // final_lighting.a = colorMap.a;
+
+    vec4 final_color =  colorMap * final_lighting;
 
     return final_color;
 }
