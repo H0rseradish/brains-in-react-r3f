@@ -1,5 +1,5 @@
 {
-  "name": "niivue-attempt-1",
+  "name": "brains-in-react-r3f",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,6 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
-    "@niivue/niivue": "^0.65.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.4.2",
     "react": "^19.2.0",
