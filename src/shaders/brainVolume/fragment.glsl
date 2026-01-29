@@ -31,7 +31,15 @@ float shininess = 40.0;
 
 // Functions are declared BEFORE use because order matters - maybe move the actual definitions above void main to be Bruno-esque??) and RENAME also. OR as includes???
 
-void raycastIsoSurface(vec3 rayStartVolumeCoords, vec3 rayStep, int stepCount, vec3 viewRayDirection); 
+bool raycastIsoSurface(
+    vec3 rayStartVolumeCoords, 
+    vec3 rayStep, 
+    int stepCount, 
+    vec3 viewRayDirection, 
+    out float hitValue,
+    out vec3 hitCoords,
+    out vec3 gStep
+); 
 
 // float sampleVolume(vec3 volumeCoords); 
 
@@ -41,8 +49,11 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection);
 
 
 
-
 void main() {
+    //Dont forget therse need to be declared here too!
+    float hitValue;
+    vec3 hitCoords;
+    vec3 gradientStep;
 
     /*
     ** THE SETUP
@@ -113,7 +124,7 @@ void main() {
     ** THE RAYCASTING
     */ 
     // Then Raycast ISO:
-    raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection);
+    raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords, gradientStep);
 
     // raycastIsoSurface1(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection);
 
@@ -126,7 +137,7 @@ void main() {
     // apply COLORMAP
 
     // add LIGHTING
-    // gl_FragColor = addLighting(val, refineVolumeCoords, gradientStep, viewRayDirection);
+    // gl_FragColor = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection);
 
     // FINAL COLOR
     if (gl_FragColor.a < 0.05)
@@ -153,24 +164,25 @@ void main() {
 //so raycasting finds a hit, shading uses the hit 
 //so this function should just be about finding the hits?
 //so it actually just determines  whether each fragment is a surface (and currently colors and lights it if it is!!!!!! ) So it needs to be a boolean and then if its true can do FragColor addLighting! AND IT NEEDS TO RETURN DATA on the hit.
-void raycastIsoSurface(
+bool raycastIsoSurface(
     vec3 rayStartVolumeCoords, 
     vec3 rayStep, 
     int stepCount, 
-    vec3 viewRayDirection
+    vec3 viewRayDirection,
     //outs: so can return more than one thing...
-    out bool hit,
-    out float hitScalarValue,
-    out vec3 hitVolumeCoords
+    out float hitValue,
+    out vec3 hitCoords,
+    out vec3 gradientStep
+    // out bool hit NO because the function itself can be bool type; ie return a boolean
 ) 
 {
     gl_FragColor = vec4(0.0);	// init transparent
     // vec4 color3 = vec4(0.0); // final color - this isnt doing anything - maybe this was originally intended to be used instead of going directly to FragColor...
 
-    bool hit = false; // init as false
 
-    // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far!
-    vec3 gradientStep = 1.5 / uVolumeSize;
+    // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
+    // NB Chatgpt suggests that this is better defined in main, not here?
+    gradientStep = 1.5 / uVolumeSize;
 
     //the current 'point' (obviously)
     vec3 currentVolumeCoords = rayStartVolumeCoords;
@@ -199,15 +211,15 @@ void raycastIsoSurface(
 
                 if (scalarValue > uIsoSurfaceThreshold) {
 
-                    //so... outs defined here
-                    hit = true;
-                    hitScalarValue = scalarValue;
-                    hitVolumeCoords = refineVolumeCoords;
+                    //so... thses are need to pass to the addLIghting function...]
+                    hitValue = scalarValue;
+                    hitCoords = refineVolumeCoords;
 
                     // addLighting() needs to happen in main, so this needs to just return true - wait, the parameters come from from this function. - and I can only return one thing from a glsl function??
                     //this is where 'out' comes in.... 
-                    gl_FragColor = addLighting(hitScalarValue, hitVolumeCoords, gradientStep, viewRayDirection);
-                    return;
+                    gl_FragColor = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection);
+                    
+                    return true;
                 }
                 // take a refined step:
                 refineVolumeCoords += refineStep;
@@ -216,6 +228,8 @@ void raycastIsoSurface(
         // Advance the location (currentVolumeCoords) deeper into the volume, or in other words, Step!
         currentVolumeCoords += rayStep;
     }
+    //if the scalarValue is less than the SearchThreshold:
+    return false;
 }
 
 
