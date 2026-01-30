@@ -18,7 +18,6 @@ varying vec4 vFarPosition;
 #include ../includes/sampleVolume.glsl
 #include ../includes/applyColorMap.glsl
 
-
 //---------------
 // These can come in as uniforms or not at all ?:
 // they are overidden in the lighting function anyway, so...?
@@ -37,23 +36,25 @@ bool raycastIsoSurface(
     int stepCount, 
     vec3 viewRayDirection, 
     out float hitValue,
-    out vec3 hitCoords,
-    out vec3 gStep
+    out vec3 hitCoords
 ); 
 
 // float sampleVolume(vec3 volumeCoords); 
 
 // vec4 applyColorMap(float val);
 
-vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection);
+vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection, out float value);
 
 
 
 void main() {
-    //Dont forget therse need to be declared here too!
+
+    // Declare outs:
+    // from raycastIsoSurface:
     float hitValue;
     vec3 hitCoords;
-    vec3 gradientStep;
+    // from addLighting:
+    float value;
 
     /*
     ** THE SETUP
@@ -116,46 +117,39 @@ void main() {
     //'return;
 
     /*
-    ** THE SAMPLING - separated out of the raycasting??????
+    ** THE SAMPLING - separated out of the raycasting?????? except that it happens in the loop so NO.
     */ 
-
 
     /*
-    ** THE RAYCASTING
+    ** RAYCASTING
     */ 
-    // Then Raycast ISO:
-    raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords, gradientStep);
 
-    // raycastIsoSurface1(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection);
+    // Then Raycast ISO: because it is now returning a boolean, can do this:
+    bool hit = raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords);
+
+    // if there isn't a hit:
+    if (!hit) discard;
 
     /*
-    ** THE SHADING
+    ** SHADING
     */ 
-    // If the ray isn't false:
-    // Change to if the casting function returns true then add all the shading to the FragColor???
 
-    // apply COLORMAP
+    // Define the size of the step between normal samples
+    // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
+    vec3 gradientStep = 1.5 / uVolumeSize;
 
     // add LIGHTING
-    // gl_FragColor = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection);
+    vec4 lighting = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection, value);
+
+    // apply COLORMAP currently inside addLighting....
+    vec4 color = applyColorMap(value);
+    
+    gl_FragColor = lighting * color;
 
     // FINAL COLOR
     if (gl_FragColor.a < 0.05)
             discard;
 }
-
-/* 
-* FUNCTIONS to separate out???
-*/
-
-
-// // Sample the volume 
-// float sampleVolume(vec3 volumeCoords)
-// {
-//     /* Sample float value from a 3D texture. Assumes intensity data. */
-//     return texture(uVolumeDataTexture, volumeCoords.xyz).r;
-// }
-
 
 /*
 * ISO Raycasting
@@ -171,25 +165,14 @@ bool raycastIsoSurface(
     vec3 viewRayDirection,
     //outs: so can return more than one thing...
     out float hitValue,
-    out vec3 hitCoords,
-    out vec3 gradientStep
-    // out bool hit NO because the function itself can be bool type; ie return a boolean
+    out vec3 hitCoords
 ) 
 {
-    gl_FragColor = vec4(0.0);	// init transparent
-    // vec4 color3 = vec4(0.0); // final color - this isnt doing anything - maybe this was originally intended to be used instead of going directly to FragColor...
-
-
-    // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
-    // NB Chatgpt suggests that this is better defined in main, not here?
-    gradientStep = 1.5 / uVolumeSize;
-
     //the current 'point' (obviously)
     vec3 currentVolumeCoords = rayStartVolumeCoords;
 
     //what is this 0.02 ???? It is to "Lower threshold to detect crossings before exact iso value" ?? still do not fully understand.
     float isoSurfaceSearchThreshold = uIsoSurfaceThreshold - 0.02 * (uColorMapValueRange[1] - uColorMapValueRange[0]);
-
 
     // Enter the raycasting loop:
 
@@ -198,7 +181,7 @@ bool raycastIsoSurface(
         if (iter >= stepCount)
             break;
         // the volume is a 'scalar field', ie, at every point there is a single number stored (representing intensity, or density)
-        // Sample from the 3D texture to get the scalarValue:
+        // Sample from the 3D texture to get the scalarValue of each step
         float scalarValue = sampleVolume(currentVolumeCoords);
 
         if (scalarValue > isoSurfaceSearchThreshold) {
@@ -210,18 +193,14 @@ bool raycastIsoSurface(
                 scalarValue = sampleVolume(refineVolumeCoords);
 
                 if (scalarValue > uIsoSurfaceThreshold) {
-
-                    //so... thses are need to pass to the addLIghting function...]
+                    // And if so,  
+                    // these can be passed out: (addLighting needs them)
                     hitValue = scalarValue;
                     hitCoords = refineVolumeCoords;
-
-                    // addLighting() needs to happen in main, so this needs to just return true - wait, the parameters come from from this function. - and I can only return one thing from a glsl function??
-                    //this is where 'out' comes in.... 
-                    gl_FragColor = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection);
-                    
+                    //And yes its a hit:
                     return true;
                 }
-                // take a refined step:
+                // take the next refined step:
                 refineVolumeCoords += refineStep;
             }
         }
@@ -234,10 +213,10 @@ bool raycastIsoSurface(
 
 
 /* 
-Lighting - Move into an includes?
+** Lighting - Move into an includes?
 */
 
-vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection)
+vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection, out float value)
 {
     // Calculate color by incorporating lighting
 
@@ -248,16 +227,16 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection)
     vec3 N;
     float val1, val2;
 
-    val1 = sampleVolume(loc + vec3(-rayStep[0], 0.0, 0.0));
-    val2 = sampleVolume(loc + vec3(+rayStep[0], 0.0, 0.0));
+    val1 = sampleVolume(loc + vec3(- rayStep[0], 0.0, 0.0));
+    val2 = sampleVolume(loc + vec3(+ rayStep[0], 0.0, 0.0));
     N[0] = val1 - val2;
     val = max(max(val1, val2), val);
-    val1 = sampleVolume(loc + vec3(0.0, -rayStep[1], 0.0));
-    val2 = sampleVolume(loc + vec3(0.0, +rayStep[1], 0.0));
+    val1 = sampleVolume(loc + vec3(0.0, - rayStep[1], 0.0));
+    val2 = sampleVolume(loc + vec3(0.0, + rayStep[1], 0.0));
     N[1] = val1 - val2;
     val = max(max(val1, val2), val);
-    val1 = sampleVolume(loc + vec3(0.0, 0.0, -rayStep[2]));
-    val2 = sampleVolume(loc + vec3(0.0, 0.0, +rayStep[2]));
+    val1 = sampleVolume(loc + vec3(0.0, 0.0, - rayStep[2]));
+    val2 = sampleVolume(loc + vec3(0.0, 0.0, + rayStep[2]));
     N[2] = val1 - val2;
     val = max(max(val1, val2), val);
 
@@ -300,10 +279,10 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection)
     // so would just return this if not applying colormap in the lighting function?
 
 
-
     // apply the colorMap, passing in val from (the raycasting???) the includes is in the fragment...
     // wait it must be better to separate this from lighting???
-    vec4 colorMap = applyColorMap(val);
+
+    // vec4 colorMap = applyColorMap(val);
 
     //thses are actually the shadow variables...
     // final_lighting = colorMap * (ambient_color + diffuse_color) + specular_color;
@@ -312,8 +291,11 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection)
 
     // final_lighting.a = colorMap.a;
 
-    vec4 final_color =  colorMap * final_lighting;
+    // // vec4 final_color =  colorMap * final_lighting;
+    // vec4 final_color = final_lighting;
+    
+    value = val;
 
-    return final_color;
+    return final_lighting;
 }
 

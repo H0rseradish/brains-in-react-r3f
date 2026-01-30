@@ -1,4 +1,4 @@
-// val is determined by addlighting?
+// val is an out from addlighting...
 
 vec4 applyColorMap(float val) 
 {
