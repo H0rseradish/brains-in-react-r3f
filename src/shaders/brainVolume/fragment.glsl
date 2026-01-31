@@ -41,9 +41,13 @@ bool raycastIsoSurface(
 
 // float sampleVolume(vec3 volumeCoords); 
 
-// vec4 applyColorMap(float val);
-
-vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection, out float value);
+vec4 addLighting(
+    float scalarValue, 
+    vec3 volumeCoords, 
+    vec3 normalSampleStep, 
+    vec3 viewDirection, 
+    out float shadedScalarValue
+);
 
 
 
@@ -54,7 +58,7 @@ void main() {
     float hitValue;
     vec3 hitCoords;
     // from addLighting:
-    float value;
+    float shadedScalarValue;
 
     /*
     ** THE SETUP
@@ -124,7 +128,7 @@ void main() {
     ** RAYCASTING
     */ 
 
-    // Then Raycast ISO: because it is now returning a boolean, can do this:
+    // Raycast ISO: it returns a boolean
     bool hit = raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords);
 
     // if there isn't a hit:
@@ -136,17 +140,16 @@ void main() {
 
     // Define the size of the step between normal samples
     // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
-    vec3 gradientStep = 1.5 / uVolumeSize;
+    vec3 normalSampleStep = 1.5 / uVolumeSize;
 
     // add LIGHTING
-    vec4 lighting = addLighting(hitValue, hitCoords, gradientStep, viewRayDirection, value);
+    vec4 lighting = addLighting(hitValue, hitCoords, normalSampleStep, viewRayDirection, shadedScalarValue);
 
-    // apply COLORMAP currently inside addLighting....
-    vec4 color = applyColorMap(value);
+    // apply COLORMAP:
+    vec4 color = applyColorMap(shadedScalarValue);
     
-    gl_FragColor = lighting * color;
-
     // FINAL COLOR
+    gl_FragColor = lighting * color;
     if (gl_FragColor.a < 0.05)
             discard;
 }
@@ -213,56 +216,65 @@ bool raycastIsoSurface(
 
 
 /* 
-** Lighting - Move into an includes?
+** Lighting - Move into an includes? 
+
+******.  What about separating out calculation of the normals!!!!  **** then also add lights as individual lights, rather than having them coupled together, then can change theses easily!!!!! THIS IS THE WAY
 */
 
-vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection, out float value)
+vec4 addLighting(float scalarValue, vec3 volumeCoords, vec3 normalSampleStep, vec3 viewDirection, out float shadedScalarValue)
 {
-    // Calculate color by incorporating lighting
 
-    // View direction
-    vec3 V = normalize(viewRayDirection);
+    viewDirection = normalize(viewDirection);
 
-    // calculate normal vector from gradient
+    // calculate the normal vector from gradient (normalSampleStep is the gradient step...)
     vec3 N;
     float val1, val2;
-
-    val1 = sampleVolume(loc + vec3(- rayStep[0], 0.0, 0.0));
-    val2 = sampleVolume(loc + vec3(+ rayStep[0], 0.0, 0.0));
+    //this is progressively sampling through the volume and computing the normal xyz values accordingly, and also updating the scalarValue is theis
+    val1 = sampleVolume(
+        volumeCoords + vec3(- normalSampleStep[0], 
+        0.0, 
+        0.0)
+    );
+    val2 = sampleVolume(volumeCoords + vec3(+ normalSampleStep[0], 0.0, 0.0));
     N[0] = val1 - val2;
-    val = max(max(val1, val2), val);
-    val1 = sampleVolume(loc + vec3(0.0, - rayStep[1], 0.0));
-    val2 = sampleVolume(loc + vec3(0.0, + rayStep[1], 0.0));
-    N[1] = val1 - val2;
-    val = max(max(val1, val2), val);
-    val1 = sampleVolume(loc + vec3(0.0, 0.0, - rayStep[2]));
-    val2 = sampleVolume(loc + vec3(0.0, 0.0, + rayStep[2]));
-    N[2] = val1 - val2;
-    val = max(max(val1, val2), val);
+    scalarValue = max(max(val1, val2), scalarValue);
 
-    float gm = length(N); // gradient magnitude
+    val1 = sampleVolume(volumeCoords + vec3(0.0, - normalSampleStep[1], 0.0));
+    val2 = sampleVolume(volumeCoords + vec3(0.0, + normalSampleStep[1], 0.0));
+    N[1] = val1 - val2;
+    scalarValue = max(max(val1, val2), scalarValue);
+
+    val1 = sampleVolume(volumeCoords + vec3(0.0, 0.0, - normalSampleStep[2]));
+    val2 = sampleVolume(volumeCoords + vec3(0.0, 0.0, + normalSampleStep[2]));
+    N[2] = val1 - val2;
+    scalarValue = max(max(val1, val2), scalarValue);
+
+    float gm = length(N); // == gradient magnitude - NOT USED?????
+
+    // re-normalise:
     N = normalize(N);
 
     // Flip normal so it points towards viewer
-    float Nselect = float(dot(N, V) > 0.0);
-    N = (2.0 * Nselect - 1.0) * N;	// ==	Nselect * N - (1.0-Nselect)*N;
+    float Nselect = float(dot(N, viewDirection) > 0.0);
+    N = (2.0 * Nselect - 1.0) * N;	// ==	Nselect * N - (1.0 - Nselect) * N;
 
     // Init colors
     vec4 ambient_color = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 diffuse_color = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 specular_color = vec4(0.0, 0.0, 0.0, 0.0);
 
-    // note: could allow multiple lights
+    // 'note: could allow multiple lights' - ITS CURRENTLY SUPERFLUOUS?
+    // And loop will always be unnecessary if I deal with each light as  separate includes?:
     for (int i = 0; i < 1; i++)
     {
             // Get light direction (make sure to prevent zero division)
-            vec3 L = normalize(viewRayDirection);	//lightDirs[i];
+            vec3 L = normalize(viewDirection);	//lightDirs[i];
             float lightEnabled = float( length(L) > 0.0 );
             L = normalize(L + (1.0 - lightEnabled));
 
             // Calculate lighting properties
             float lambertTerm = clamp(dot(N, L), 0.0, 1.0);
-            vec3 H = normalize(L+V); // Halfway vector
+            vec3 H = normalize(L+ viewDirection); // Halfway vector
             float specularTerm = pow(max(dot(H, N), 0.0), shininess);
 
             // Calculate mask
@@ -273,29 +285,14 @@ vec4 addLighting(float val, vec3 loc, vec3 rayStep, vec3 viewRayDirection, out f
             diffuse_color += mask1 * lambertTerm;
             specular_color += mask1 * specularTerm * specular_color;
     }
+    // I cant actually see a difference with or without specular color...
+    vec4 final_lighting =(ambient_color + diffuse_color) + specular_color;
 
-    // Calculate final color by componing different components
-    vec4 final_lighting;
-    // so would just return this if not applying colormap in the lighting function?
-
-
-    // apply the colorMap, passing in val from (the raycasting???) the includes is in the fragment...
-    // wait it must be better to separate this from lighting???
-
-    // vec4 colorMap = applyColorMap(val);
-
-    //thses are actually the shadow variables...
-    // final_lighting = colorMap * (ambient_color + diffuse_color) + specular_color;
-
-    final_lighting =(ambient_color + diffuse_color) + specular_color;
-
+    // not sure what to do about this...:
     // final_lighting.a = colorMap.a;
 
-    // // vec4 final_color =  colorMap * final_lighting;
-    // vec4 final_color = final_lighting;
-    
-    value = val;
+    // the out (needed by applyColorMap()):
+    shadedScalarValue = scalarValue;
 
     return final_lighting;
 }
-
