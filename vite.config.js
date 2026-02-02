@@ -9,5 +9,6 @@ export default defineConfig({
     react(),
     glsl()
   ],
+  // needed for github pages...
   base: "/brains-in-react-r3f/"
 })

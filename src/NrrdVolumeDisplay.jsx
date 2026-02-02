@@ -4,7 +4,10 @@
 import { useMemo, useEffect, useState, useRef } from "react";
 import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, TextureLoader, BackSide, UniformsUtils } from "three";
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
-// Will try to use shaders locally instead of this so that can adapt them?
+
+import { useControls } from 'leva';
+import { Perf } from 'r3f-perf'
+
 // import { VolumeRenderShader1 } from "three/examples/jsm/Addons.js";
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
 
@@ -16,6 +19,12 @@ import brainVolumeFragmentShader from './shaders/brainVolume/fragment.glsl'
 
 export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } ) 
 {
+    // leva controls
+    const { perfVisible } = useControls({
+        perfVisible: false
+    })
+
+
     // TIDIED into one thing - DONE
     const [volumeSize, setVolumeSize] = useState(null);
 
@@ -42,13 +51,12 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
         // nb doing this Vector2() here means must use set() elsewhere so am not re-creating vectors:
         //the colorMapValueRange: might be worth putting in a gui and changing it so can diffrentiate betqween surfaces... or would that be a calculation based on the when there is clear space in the data ie 
-        uColorMapValueRange: { value: new Vector2(2, 10) }, // colormap thing - 'clim' RENAMED!
+        uColorMapValueRange: { value: new Vector2(0, 2) }, 
         //nb used null because am re-creating the vectors elsewhere:
-        uColorMapTexture: { value: null }, // cm_data is colormap too... - RENAMED!
-        uVolumeDataTexture: { value: null }, // Should be aData3DTexture, as in the actual MRI texture - RENAME?
-        // u_renderstyle: { value: 1 }, // 1 is ISO ...can I get rid? YES.. Will I ever need mip???? If so it would be in separate shader anyway.
+        uColorMapTexture: { value: null }, // cm_data is colormap too... - 
+        uVolumeDataTexture: { value: null }, 
         // Ok this is the ISO threshold which defines the intensity level at which a surface exists:
-        uIsoSurfaceThreshold: { value: 0.15}, //not sure....
+        uIsoSurfaceThreshold: { value: 0.15},
         uVolumeSize: { value: new Vector3() }, // the volume size('lengths')
 
     }), [])
@@ -97,6 +105,8 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
     return (
         <group>
+            {/* Just add this here, need to reposition it though!*/}
+            { perfVisible ? <Perf position='top-left' /> : null}
             <mesh 
                 ref={ brainModel }                
                 // scale={ [ 0.5, 0.5, 0.5] }
