@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './global.css' 
 import { Canvas } from '@react-three/fiber'
@@ -40,7 +40,9 @@ createRoot(document.getElementById('root')).render(
         // } }
         >
             <XR store={ store }>
-                <App />
+                <Suspense>
+                    <App />
+                </Suspense>
             </XR>
         </Canvas>
     </>
