@@ -4,7 +4,6 @@
 import { useMemo, useEffect, useState, useRef } from "react";
 import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, TextureLoader, BackSide, UniformsUtils } from "three";
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
-
 import { useControls } from 'leva';
 import { Perf } from 'r3f-perf'
 
@@ -104,12 +103,12 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
 
     return (
-        <group>
+        <group scale={0.5}>
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
             <mesh 
                 ref={ brainModel }                
-                // scale={ [ 0.5, 0.5, 0.5] }
+                position-y={-500 }
             >
                 { volumeSize && 
                     // set the size of the geometry that 'holds' it according to the size of the volume (model):

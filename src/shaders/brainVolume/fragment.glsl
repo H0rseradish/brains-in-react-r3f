@@ -150,8 +150,8 @@ void main() {
     
     // FINAL COLOR
     gl_FragColor = lighting * color;
-    if (gl_FragColor.a < 0.05)
-            discard;
+    // if (gl_FragColor.a < 0.05)
+    //         discard;
 }
 
 /*
