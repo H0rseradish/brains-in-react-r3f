@@ -103,12 +103,12 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
 
     return (
-        <group scale={0.5}>
+        <group position-z={ - 300 } rotation-x={ Math.PI * - 0.5 } rotation-z={ Math.PI }>
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
             <mesh 
                 ref={ brainModel }                
-                position-y={-500 }
+                // position-z={ - 300 }
             >
                 { volumeSize && 
                     // set the size of the geometry that 'holds' it according to the size of the volume (model):
