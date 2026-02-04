@@ -6,6 +6,7 @@ import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, Te
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
 import { useControls } from 'leva';
 import { Perf } from 'r3f-perf'
+import { createXRStore } from '@react-three/xr'
 
 // import { VolumeRenderShader1 } from "three/examples/jsm/Addons.js";
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
@@ -22,7 +23,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     const { perfVisible } = useControls({
         perfVisible: false
     })
-
+    const store = useMemo(() => createXRStore(), [])
 
     // TIDIED into one thing - DONE
     const [volumeSize, setVolumeSize] = useState(null);
