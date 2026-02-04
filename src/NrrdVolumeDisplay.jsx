@@ -27,12 +27,8 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     // TIDIED into one thing - DONE
     const [volumeSize, setVolumeSize] = useState(null);
 
-    // (volconfig was for a gui)
-    // const [volconfig, setVolconfig] = useState()
-    
-    // NOOOOOOOOOO......This was a HUUUUUUGE error... leaving it here  commented out to remind me of my own folly:
-    // const [uniforms, setUniforms] = useState()
 
+    // Do not need this?
     const brainModel = useRef()
 
     // ColormapTexture texture 'cache' it (or them) with useMemo??
@@ -84,7 +80,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
         texture.format = RedFormat;
         texture.type = FloatType;
-        // didnt know you could do this (Mr Doob code):
+        // (Mr Doob code style!):
         texture.minFilter = texture.magFilter = LinearFilter;
 
         texture.unpackAlignment = 1;
@@ -103,12 +99,13 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
 
     return (
-        <group position-z={ - 300 } rotation-x={ Math.PI * - 0.5 } rotation-z={ Math.PI }>
+        // group settings were position-z={ - 300 } rotation-x={ Math.PI * - 0.5 } rotation-z={ Math.PI }
+        // this rotation though... r
+        <group position-z={ - 300 } rotation={ [Math.PI * - 0.55, 0, Math.PI] }>
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
             <mesh 
                 ref={ brainModel }                
-                // position-z={ - 300 }
             >
                 { volumeSize && 
                     // set the size of the geometry that 'holds' it according to the size of the volume (model):
@@ -136,7 +133,6 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                 // scale={ [ 0.5, 0.5, 0.5] }
                 visible={ true }
             >
-                {/* wait how do I get these: by using state...? */}
                 { volumeSize && 
                     <boxGeometry 
                         args={ [ volumeSize.x, volumeSize.y, volumeSize.z] }

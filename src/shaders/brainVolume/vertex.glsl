@@ -38,7 +38,7 @@ void main() {
     vec4 farViewPosition = viewPosition;
     farViewPosition.z = viewPosition.w;
 
-    //attempting to sort the centering issue here instaed of in the fragment calcs
+    //attempting to sort the centering issue here instead of in the fragment calcs:
     vec3 volumeOffset = 0.5 * uVolumeSize;
 
     vNearPosition = viewToLocalMatrix * nearViewPosition;

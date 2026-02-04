@@ -77,8 +77,9 @@ void main() {
     // 1. 
     // this is the distance along the ray from position to the near clipping plane:
     float rayEntryDistance = dot(nearPosition - vPosition, viewRayDirection);
+
     // ...so this is a starting point.... it's further refined in the next 3 reassignments. This is reassigning to progressively compute all the cases, ie find the latest of the (earliest) entry points:
-    // 2. entry after the x
+    // 2. entry after the x taken into account
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -87,7 +88,7 @@ void main() {
             (uVolumeSize.x  - vPosition.x) / viewRayDirection.x
         )
     );
-    // 3. entry after the x
+    // 3. entry after the y
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -95,7 +96,7 @@ void main() {
             (uVolumeSize.y  - vPosition.y) / viewRayDirection.y
         )
     );
-    // 3. entry after the x
+    // 3. entry after the z
     rayEntryDistance = max(
         rayEntryDistance, 
         min(
@@ -128,7 +129,7 @@ void main() {
     ** RAYCASTING
     */ 
 
-    // Raycast ISO: it returns a boolean
+    // Raycast ISO: it returns a boolean, and there are 2 outs:
     bool hit = raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords);
 
     // if there isn't a hit:
@@ -174,7 +175,7 @@ bool raycastIsoSurface(
     //the current 'point' (obviously)
     vec3 currentVolumeCoords = rayStartVolumeCoords;
 
-    //what is this 0.02 ???? It is to "Lower threshold to detect crossings before exact iso value" ?? still do not fully understand.
+    //why is this 0.02 ???? It is to "Lower threshold to detect crossings before exact iso value" ?? still do not fully understand.
     float isoSurfaceSearchThreshold = uIsoSurfaceThreshold - 0.02 * (uColorMapValueRange[1] - uColorMapValueRange[0]);
 
     // Enter the raycasting loop:
