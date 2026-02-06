@@ -6,7 +6,7 @@ import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, Te
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
 import { useControls } from 'leva';
 import { Perf } from 'r3f-perf'
-import { createXRStore } from '@react-three/xr'
+
 
 // import { VolumeRenderShader1 } from "three/examples/jsm/Addons.js";
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
@@ -23,7 +23,6 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     const { perfVisible } = useControls({
         perfVisible: false
     })
-    const store = useMemo(() => createXRStore(), [])
 
     // TIDIED into one thing - DONE
     const [volumeSize, setVolumeSize] = useState(null);
@@ -100,9 +99,9 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         
 
     return (
-        // group settings were position-z={ - 300 } rotation-x={ Math.PI * - 0.5 } rotation-z={ Math.PI }
-        // this rotation though... r
-        <group position-z={ - 300 } rotation={ [Math.PI * - 0.55, 0, Math.PI] }>
+        // scale!!!!!
+        // this rotation though... and orbit controls rotate origin is at centre of scene...
+        <group scale={ 1 } position-z={ -256 } rotation={ [Math.PI * - 0.55, 0, Math.PI] }>
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
             <mesh 
@@ -131,13 +130,11 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
             {/* debug mesh */}
             <mesh 
-                // scale={ [ 0.5, 0.5, 0.5] }
                 visible={ true }
             >
                 { volumeSize && 
                     <boxGeometry 
-                        args={ [ volumeSize.x, volumeSize.y, volumeSize.z] }
-                        // translate={ [volumeSize.x / 2, volumeSize.y / 2, volumeSize.z / 2] }           
+                        args={ [ volumeSize.x, volumeSize.y, volumeSize.z] }    
                     />
                 } 
                 <meshBasicMaterial

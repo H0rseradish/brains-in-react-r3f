@@ -126,8 +126,12 @@ void main() {
     */ 
 
     /*
-    ** RAYCASTING
+    ** RAYCASTING (RayMARCHING might be a better description.) 
     */ 
+    //  It currently does not calculate a perspective view...
+     
+
+
 
     // Raycast ISO: it returns a boolean, and there are 2 outs:
     bool hit = raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords);
