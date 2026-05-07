@@ -3,7 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrthographicCamera, OrbitControls } from "@react-three/drei";
 import { XROrigin, createXRStore, XR} from '@react-three/xr'
 import { Leva } from 'leva'
-import NrrdVolumeDisplay from "./NrrdVolumeDisplay"
+import NrrdVolumeDisplay from "./NrrdVolumeDisplayv3"
 
 export default function App()
 {
@@ -41,18 +41,18 @@ export default function App()
         far: 1000
     }
 
-    
+    // has amends to enable a feature to output high res png files (commented out things..)
     return <>
 
-        <button onClick={() => store.enterVR()}>Enter VR</button>
-        <button onClick={() => store.enterAR()}>Enter AR</button>
+        {/* <button onClick={() => store.enterVR()}>Enter VR</button>
+        <button onClick={() => store.enterAR()}>Enter AR</button> */}
 
-        <Leva collapsed />
-        <Canvas>
+        {/* <Leva collapsed /> */}
+        <Canvas gl={{ preserveDrawingBuffer: true }} >
 
-            <XR store={ store }>
+            {/* <XR store={ store }> */}
                 {/* ie 256 metres away...!!!!!!!! THIS IS DAFT */}
-                <XROrigin position-z={ 256 }/>
+                {/* <XROrigin position-z={ 256 }/> */}
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
@@ -70,10 +70,10 @@ export default function App()
                     
                     <OrbitControls />
                    
-                    <NrrdVolumeDisplay nrrdUrl="./MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
+                    <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 
                 </Suspense>
-            </XR>
+            {/* </XR> */}
 
         </Canvas>
         

@@ -4,6 +4,7 @@
 import { useMemo, useEffect, useState, useRef } from "react";
 import { Vector2, Vector3, Data3DTexture, RedFormat, FloatType, LinearFilter, TextureLoader, BackSide, UniformsUtils } from "three";
 import { NRRDLoader } from "three/examples/jsm/Addons.js";
+import { useLoader } from "@react-three/fiber";
 import { useControls } from 'leva';
 import { Perf } from 'r3f-perf'
 
@@ -12,10 +13,10 @@ import { Perf } from 'r3f-perf'
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
 
 import brainVolumeVertexShader from './shaders/brainVolume/vertex.glsl'
-import brainVolumeFragmentShader from './shaders/brainVolume/fragment.glsl'
-//ah I needed a vite glsl plugin...!!
-// console.log(brainVolumeFragmentShader)
+import brainVolumeFragmentShader from './shaders/brainVolume/single-fragment.glsl'
 
+//ah I also needed that vite glsl plugin...!!
+// console.log(brainVolumeFragmentShader)
 
 export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } ) 
 {
@@ -27,17 +28,8 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     // TIDIED into one thing - DONE
     const [volumeSize, setVolumeSize] = useState(null);
 
+    const colorMapTexture = useLoader(TextureLoader, colorMapURL);
 
-    // Do not need this?
-    const brainModel = useRef()
-
-    // ColormapTexture texture 'cache' it (or them) with useMemo??
-    const colorMapTexture = useMemo(() => 
-    {
-        const loader = new TextureLoader();
-        return loader.load(colorMapURL);
-
-    }, [colorMapURL]);
 
     //NB see Bruno's lesson 61 for Drei helper for shader Material that I could use instead of doing this?... Maybe I should have but this is good for learning?
     // uniforms memoized as for colorMap:
@@ -57,9 +49,10 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     }), [])
     
     // console.log(volumeData)
-    
     // is this right? Yes - do it once unless dependencies change.
     useEffect(() => {
+
+        //useLoader caches automatically - is this relevant if I am only loading in one place...??? I diont know.
 
         new NRRDLoader().load(nrrdUrl, (volume) => 
         {
@@ -104,9 +97,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         <group scale={ 1 } position-z={ -256 } rotation={ [Math.PI * - 0.55, 0, Math.PI] }>
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
-            <mesh 
-                ref={ brainModel }                
-            >
+            <mesh>
                 { volumeSize && 
                     // set the size of the geometry that 'holds' it according to the size of the volume (model):
                     <boxGeometry 
@@ -130,7 +121,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
             {/* debug mesh */}
             <mesh 
-                visible={ true }
+                visible={ false }
             >
                 { volumeSize && 
                     <boxGeometry 
