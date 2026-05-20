@@ -91,7 +91,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
         })
         // dont need uniforms (its already useMemo'd) in the dependencies because it wont change/need to trigger useEffect.
-    }, [nrrdUrl, colorMapTexture, ])
+    }, [nrrdUrl, colorMapTexture ])
         
 
     return (

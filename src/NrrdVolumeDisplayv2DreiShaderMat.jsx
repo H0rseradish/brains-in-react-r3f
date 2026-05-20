@@ -17,22 +17,22 @@ import { Perf } from 'r3f-perf';
 import vertexShader from './shaders/brainVolume/vertex.glsl'
 import fragmentShader from './shaders/brainVolume/fragment.glsl'
 
-// the drei helper: maybe this is unreliable in this case:
-// const BrainMaterial = new shaderMaterial(
-//     // can pass uniforms values as props but ref better?  but  must be defined here:
-//     {
-//         uVolumeSize: new Vector3(),
-//         uColorMapTexture: null,
-//         uVolumeDataTexture: null,
-//         // plus some hardcoded values here?
-//         uIsoSurfaceThreshold: 0.2,
-//         uColorMapValueRange: new Vector2(0, 2),
-//     },
-//     vertexShader,
-//     fragmentShader
-// );
+// the drei helper: it didnyt work originally because I had 'new' here so it was making another every time....
+const BrainMaterial = shaderMaterial(
+    // can pass uniforms values as props but ref better?  but  must be defined here:
+    {
+        uVolumeSize: new Vector3(),
+        uColorMapTexture: null,
+        uVolumeDataTexture: null,
+        // plus some hardcoded values here?
+        uIsoSurfaceThreshold: 0.2,
+        uColorMapValueRange: new Vector2(0, 2),
+    },
+    vertexShader,
+    fragmentShader
+);
 // // make the class with extend:
-// extend({ BrainMaterial });
+extend({ BrainMaterial });
 
 
 
@@ -44,6 +44,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     })
 
     const brainMaterialRef = useRef(null);
+    
     const volumeDataTextureRef = useRef(null);
     // remember to put the array in here!!! Empty arrays cause shader bugs according to chatgpt th Ref is needed fpr the uniforms??
     const volumeSizeRef = useRef([ 0, 0, 0 ]);
@@ -129,13 +130,15 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             //     )
             // }
 
-            uniforms.uColorMapTexture.value = colorMapTexture;
+            // uniforms.uColorMapTexture.value = colorMapTexture;
             // Is a Data3DTexture, the actual MRI texture - 
             uniforms.uVolumeDataTexture.value = texture;
             // remember do not use the React state inside the thing that sets it!!!!!
-            uniforms.uVolumeSize.value.set(volumeSize); 
+            // uniforms.uVolumeSize.value.set(volumeSize); 
         })
-    }, [nrrdUrl, colorMapTexture, uniforms, volumeSize])
+
+
+    }, [nrrdUrl, colorMapTexture ])
         
 
     return (
@@ -149,15 +152,15 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                 <mesh>
                     {/* set the size of the geometry that 'holds' it according to the size of the volume (model): */}
                     <boxGeometry args={ [ volumeSize.x, volumeSize.y, volumeSize.z] } />
-                    {/* <brainMaterial ref={ brainMaterialRef } side={ BackSide }/> */}
-                    { uniforms &&
-                        <shaderMaterial 
+                    {/* ok this works now! */}
+                    {/* { uniforms && */}
+                        <brainMaterial 
                             uniforms={ uniforms }
-                            vertexShader={ vertexShader } 
-                            fragmentShader={ fragmentShader }
+                            uVolumeSize = { volumeSize }
+                            uColorMapTexture = { colorMapTexture }
                             side={ BackSide }
                         />
-                    }
+                    {/* } */}
                 </mesh>
             }
 

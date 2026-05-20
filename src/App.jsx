@@ -3,7 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 import { OrthographicCamera, OrbitControls } from "@react-three/drei";
 import { XROrigin, createXRStore, XR} from '@react-three/xr'
 import { Leva } from 'leva'
-import NrrdVolumeDisplay from "./NrrdVolumeDisplayv3"
+import NrrdVolumeDisplay from "./NrrdVolumeDisplayv2DreiShaderMat.jsx"
 
 export default function App()
 {
@@ -58,7 +58,7 @@ export default function App()
                 <Suspense>
 
                     <OrthographicCamera 
-                        makeDefault 
+                        // makeDefault 
                         args={ [orthographicCameraSettings] }
                         // positioning of orthographic camera does not change scale,ONLY WHAT IS VISIBLE IN THE FRUSTUM!
                         // a value (any value) in position seems to be necessary for orbit controls to work - but WHY???
