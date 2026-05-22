@@ -1,5 +1,6 @@
 import { useMemo, Suspense } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
+import { PerspectiveCamera } from 'three';
 import { OrthographicCamera, OrbitControls } from "@react-three/drei";
 import { XROrigin, createXRStore, XR} from '@react-three/xr'
 import { Leva } from 'leva'
@@ -56,8 +57,16 @@ export default function App()
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
+                    <perspectiveCamera
+                        makeDefault
+                        fov={75}
+                        near={0.1}
+                        far={5000}
+                        position={[0, 0, 0]}
+                        up={[0, 1, 0]}
+                    />
 
-                    <OrthographicCamera 
+                    {/* <OrthographicCamera 
                         // makeDefault 
                         args={ [orthographicCameraSettings] }
                         // positioning of orthographic camera does not change scale,ONLY WHAT IS VISIBLE IN THE FRUSTUM!
@@ -66,9 +75,9 @@ export default function App()
                     
                         //this up value affects how the orbit controls work... ie which way round:
                         up={ [ 0, 1, 0 ] }
-                    />
+                    /> */}
                     
-                    <OrbitControls />
+                    <OrbitControls target={[0, 0, 0]}/>
                    
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 
