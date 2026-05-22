@@ -3,6 +3,8 @@
 precision highp float;
 precision mediump sampler3D;
 
+// uniform vec3 uCameraPosition; // for perspective
+
 uniform vec3 uVolumeSize;
 uniform float uIsoSurfaceThreshold;
 uniform vec2 uColorMapValueRange;
@@ -13,6 +15,7 @@ uniform sampler2D uColorMapTexture;
 varying vec3 vPosition;
 varying vec4 vNearPosition;
 varying vec4 vFarPosition;
+varying vec3 vWorldPosition;
 
 // #include ../includes/sampleVolume.glsl
 
@@ -80,14 +83,36 @@ void main() {
     vec3 farPosition = vFarPosition.xyz / vFarPosition.w;
     //The ray between these is the camera ray, so do not need uCameraPosition to calculate the ray direction, as the ray direction is from near to far, so from ray origin to ray end, so can just do far - near, (below). This is a bit different from the orthographic case where the ray direction is the same for all rays and is just from camera to position.
 
+    //--------
+    // World  space ray:
+    // vec3 rayOriginWorld = cameraPosition;
+    
+    // vec3 rayDirectionWorld = normalize(vWorldPosition - cameraPosition);
+
+    //Convert to local space
+   
+    
+
+    
+
+    //--------------
 
     // COMPUTE ENTRY/EXIT POINTS (OF BOX) USING PERSPECTIVE RAYS:
 
     // For PERSPECTIVE: Ray origin at near-plane intersection:
-    vec3 rayOrigin = nearPosition;
+    // vec3 rayOrigin = nearPosition;
+    vec3 rayOrigin = cameraPosition;
+    // vec3 rayOrigin = rayOriginLocal + 0.5 * uVolumeSize;
+    
 
     // For PERSPECTIVE: Direction into the scene (towards the far-plane intersection):
-    vec3 rayDirection = normalize(farPosition - nearPosition);
+    // vec3 rayDirection = normalize(farPosition - nearPosition);
+    vec3 rayDirection = normalize(vWorldPosition - cameraPosition);
+    // vec3 rayDirection = rayDirLocal;
+
+
+
+    
 
     // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeSize]
 
@@ -130,7 +155,7 @@ void main() {
     int stepCount = int(rayLength / RELATIVE_STEP_SIZE + 0.5);
 
     // int stepCount = int(rayLength); broke it
-    
+
     if (stepCount < 1) discard;
 
 

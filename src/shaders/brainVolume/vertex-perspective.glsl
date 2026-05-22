@@ -6,6 +6,7 @@ uniform vec3 uVolumeSize;
 varying vec3 vPosition;
 varying vec4 vNearPosition;
 varying vec4 vFarPosition;
+varying vec3 vWorldPosition;
 
 
 void main() {
@@ -57,5 +58,8 @@ void main() {
 
     // For consistency with vFarPosition and vNearPosition offsets:
     vPosition = position + volumeOffset;
+
+    // For now until I sort the scaling issue:
+    vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
 
 }
