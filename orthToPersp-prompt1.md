@@ -4,13 +4,15 @@ TL;DR: Update the existing volume raycasting shader so it computes camera rays i
 
 
 **Steps**
+*Made new uCameraPosition uniform*
 
 1. Inspect current ray setup in `src/shaders/brainVolume/vertex.glsl` and `src/shaders/brainVolume/single-fragment.glsl`.
 *made copies of shaders for safety - fragment-perspective.glsl etc*
 
+
 2. Define the perspective ray math goal:
    - Ray origin should be the camera position in local volume coordinates.
-   *Is this the modelViewMatrix? aka world space?*
+   *Is this the modelViewMatrix? aka world space? I need to pass cameraPosition as a uniform -I think?*
    - Ray direction should point from camera through the fragment’s position on the near plane (or through the backface sample point) for a perspective camera.
    
 
@@ -83,16 +85,20 @@ Read [](file:///Users/sarahhartill/Documents/projects/brains/brains-in-react-r3f
    - Pass them as varyings: `vNearPosition` and `vFarPosition`.
    *As existing code*
    - If the volume is centered in local space, keep the existing `volumeOffset = 0.5 * uVolumeSize` adjustment.
-   *As existing code*
+*All as existing code*
 
 3. **Make the fragment shader compute the perspective ray**
    - Normalize the varyings:  
      `vec3 nearPosition = vNearPosition.xyz / vNearPosition.w;`  
      `vec3 farPosition = vFarPosition.xyz / vFarPosition.w;`
+     *As existing code*
    - Derive a ray origin and direction for perspective:
      - `vec3 rayOrigin = nearPosition;`
+     *Made new variable*
      - `vec3 viewRayDirection = normalize(farPosition - nearPosition);`
+     *Changed value of variable*
    - This is the key perspective change: the ray starts at the camera’s near-plane intersection and points through the fragment toward the far plane.
+*Done*
 
 4. **Compute entry/exit of the box using perspective rays**
    - Replace the current orthographic-style `rayEntryDistance` logic with a slab intersection method:
@@ -100,6 +106,7 @@ Read [](file:///Users/sarahhartill/Documents/projects/brains/brains-in-react-r3f
      - Use `max(tMin)` and `min(tMax)` to get the valid ray interval.
    - If `tMax < tMin`, discard the fragment.
    - Use `rayEntryDistance = max(tMin, 0.0)` as the first valid hit into the volume.
+*done with help of Copilot*
 
 5. **Generate the raymarching start point and step**
    - Compute:
@@ -110,21 +117,25 @@ Read [](file:///Users/sarahhartill/Documents/projects/brains/brains-in-react-r3f
    - Set `rayStep = (rayExitPosition - rayEntryPosition) / float(stepCount)` or using volume texture coordinates:
      - `vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeSize;`
      - `vec3 rayStep = (viewRayDirection / uVolumeSize) * (rayLength / float(stepCount));`
+   *done with help of Copilot*
 
 6. **Keep the existing raycast + shading flow**
    - Call `raycastIsoSurface(rayStartVolumeCoords, rayStep, stepCount, viewRayDirection, hitValue, hitCoords)`.
    - Keep lighting and colormap logic untouched.
    - Ensure `viewRayDirection` is used consistently for shading.
+   *just changed some variable names*
 
 7. **Verify coordinate centering and uniforms**
    - Confirm `uVolumeSize` is still set from the loaded volume dimensions.
    - If you center the model in the vertex shader with `volumeOffset`, make sure the same offset is applied to all ray computations.
    - If the volume is not centered, adjust the ray origin and box bounds accordingly.
+   *No change to original*
 
 8. **Switch the React scene to perspective**
    - In App.jsx or AppNoDrei.jsx, replace `OrthographicCamera` with a `PerspectiveCamera` or use the default canvas camera.
    - Render `NrrdVolumeDisplay` with that perspective camera.
    - Observe whether the volume now appears perspective-correct.
+*Already done*
 
 9. **Test and refine**
    - Rotate/translate the volume and confirm rays still enter/exit correctly.

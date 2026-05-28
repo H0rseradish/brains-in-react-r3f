@@ -24,14 +24,6 @@ export default function App()
     // const { size } = useThree()
     // const aspect = size.width / size.height
 
-    //so... cant just put these in the jsx, because aspect ratio...
-    // const orthographicCameraSettings = useMemo(() => ({
-    //     right: h * aspect / 2,
-    //     top: h / 2,
-    //     bottom: - h / 2,
-    //     near: 1,
-    //     far: 1000
-    // }),[ h, aspect ] )
 
     const orthographicCameraSettings = {
         left: - h * aspect / 2,
@@ -42,28 +34,29 @@ export default function App()
         far: 1000
     }
 
-    // has amends to enable a feature to output high res png files (commented out things..)
+    
     return <>
 
-        {/* <button onClick={() => store.enterVR()}>Enter VR</button>
-        <button onClick={() => store.enterAR()}>Enter AR</button> */}
+        <button onClick={() => store.enterVR()}>Enter VR</button>
+        <button onClick={() => store.enterAR()}>Enter AR</button>
 
         {/* <Leva collapsed /> */}
         <Canvas gl={{ preserveDrawingBuffer: true }} >
 
-            {/* <XR store={ store }> */}
-                {/* ie 256 metres away...!!!!!!!! THIS IS DAFT */}
-                {/* <XROrigin position-z={ 256 }/> */}
+            <XR store={ store }>
+                {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
+                <XROrigin position-z={ 256 }/> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
                     <perspectiveCamera
                         makeDefault
                         fov={75}
-                        near={0.1}
+                        near={1}
                         far={5000}
                         position={[0, 0, 0]}
-                        up={[0, 1, 0]}
+                        rotation={ [0, 0, 0] }
+                        up={[0, 0, 0]}
                     />
 
                     {/* <OrthographicCamera 
@@ -82,7 +75,7 @@ export default function App()
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 
                 </Suspense>
-            {/* </XR> */}
+            </XR> 
 
         </Canvas>
         

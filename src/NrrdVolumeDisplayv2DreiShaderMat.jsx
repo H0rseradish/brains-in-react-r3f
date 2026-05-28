@@ -147,24 +147,22 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         // scale? NOOOOOOOO!!!!! Because it conflicts with all the shader maths!!!
         // this rotation though... and orbit controls rotate origin is at centre of scene...
         // <group scale={1}>
-        <group scale={ 2 } position-z={ -256 } rotation={ [Math.PI * - 0.55, 0, Math.PI] }>
+        <group scale={ 2 } position-z={ -256 } rotation={ [Math.PI * 0.5, 0, 0] }>
+        
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
-
+            
             { volumeSize &&
                 <mesh>
                     {/* set the size of the geometry that 'holds' it according to the size of the volume (model): ie (364, 436, 364 ) for the 0.5 mm NRRD volume (see the nrrd file metadata) Spacing however is 0.5 (space directions metadata) so this needs to be taken into account see comment at bottom */ }
                     <boxGeometry args={ [ volumeSize.x, volumeSize.y, volumeSize.z] } />
-                    {/* ok this works now! */}
-                    {/* { uniforms && */}
-                        <brainMaterial 
-                            uniforms={ uniforms }
-                            uVolumeSize = { volumeSize }
-                            uColorMapTexture = { colorMapTexture }
-                            uCameraPosition = { cameraPosition }
-                            side={ BackSide }
-                        />
-                    {/* } */}
+                    <brainMaterial 
+                        uniforms={ uniforms }
+                        uVolumeSize = { volumeSize }
+                        uColorMapTexture = { colorMapTexture }
+                        uCameraPosition = { cameraPosition }
+                        side={ BackSide }
+                    />
                 </mesh>
             }
 
