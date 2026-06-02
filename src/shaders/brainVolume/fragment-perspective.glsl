@@ -183,7 +183,7 @@ void main() {
 
     // if there isn't a hit:
     if (!hit) discard;
-    
+
 
     /*
     ** SHADING

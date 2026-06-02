@@ -17,7 +17,11 @@ import { Perf } from 'r3f-perf';
 import vertexShader from './shaders/brainVolume/vertex-perspective.glsl'
 import fragmentShader from './shaders/brainVolume/fragment-perspective.glsl'
 
-// the drei helper: it didnyt work originally because I had 'new' here so it was making another every time....
+
+//this was originally to scale the head burt I am not sure that it does that.. So was originally called METERES_TO_CM:
+const FRIG_FACTOR = 0.01;
+
+// the drei helper: 'new' is not required:
 const BrainMaterial = shaderMaterial(
     // can pass uniforms values as props but ref better?  but must be defined here:
     {
@@ -50,6 +54,10 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     
     // state needed for jsx:
     const [volumeSize, setVolumeSize] = useState(null);
+    //because the voume size in the real world would be 436 metres high... because 1 unit = 1 meter:
+    const [physicalSize, setPhysicalSize] = useState(null);
+
+    //possibly dont need this now because: I want the head to be larger than life size... Hoever this setting this would however makes the scale transferable to other MRI scans: because spacing is set from the metadata in the .nrrd file:
     const [spacing, setSpacing] = useState({ x: 1, y: 1, z: 1 });
 
     //needed for perspective camera raymarching:
@@ -100,11 +108,17 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                 y: volume.yLength,
                 z: volume.zLength
             });
-
+            // from the .nrrd file metadata so this would make my code transferable...
             setSpacing({
                 x: volume.spacing[0],
                 y: volume.spacing[1],
                 z: volume.spacing[2]
+            });
+            // calculate the physical size of the volume based on its dimensions and spacing:
+            setPhysicalSize({
+                x: volume.xLength * volume.spacing[0] * FRIG_FACTOR, // convert to cm for real world scale
+                y: volume.yLength * volume.spacing[1] * FRIG_FACTOR,
+                z: volume.zLength * volume.spacing[2] * FRIG_FACTOR
             });
 
 
@@ -147,7 +161,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         // scale? NOOOOOOOO!!!!! Because it conflicts with all the shader maths!!!
         // this rotation though... and orbit controls rotate origin is at centre of scene...Math.PI * 0.5
         // <group scale={1}>
-        <group scale={2} position-z={0} rotation={ [0, 0, 0] }>
+        <group>
         
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
@@ -155,10 +169,12 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             { volumeSize &&
                 <mesh>
                     {/* set the size of the geometry that 'holds' it according to the size of the volume (model): ie (364, 436, 364 ) for the 0.5 mm NRRD volume (see the nrrd file metadata) Spacing however is 0.5 (space directions metadata) so this needs to be taken into account see comment at bottom */ }
-                    <boxGeometry args={ [ volumeSize.x, volumeSize.y, volumeSize.z] } />
+                    {/* <boxGeometry args={ [ volumeSize.x, volumeSize.y, volumeSize.z] } /> */}
+                    {/* using physical Size */}
+                    <boxGeometry args={ [ physicalSize.x, physicalSize.y, physicalSize.z] } /> 
                     <brainMaterial 
                         uniforms={ uniforms }
-                        uVolumeSize = { volumeSize }
+                        uVolumeSize = { physicalSize }
                         uColorMapTexture = { colorMapTexture }
                         uCameraPosition = { cameraPosition }
                         side={ BackSide }
@@ -169,7 +185,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             {/* debug mesh */}
             { volumeSize && 
                 <mesh visible={ true } >
-                    <boxGeometry args={[ volumeSize.x, volumeSize.y, volumeSize.z] } />
+                    <boxGeometry args={[ physicalSize.x, physicalSize.y, physicalSize.z] } />
                     <meshBasicMaterial wireframe={ true } />
                 </mesh>
             }

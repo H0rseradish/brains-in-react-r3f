@@ -1,7 +1,7 @@
-import { useMemo, Suspense } from 'react'
+import { useMemo, useRef, useEffect, Suspense } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
 // check out import of Orbit Controls
-import { OrthographicCamera, OrbitControls } from "@react-three/drei";
+import { OrthographicCamera, PerspectiveCamera, OrbitControls } from "@react-three/drei";
 
 import { XROrigin, createXRStore, XR} from '@react-three/xr'
 import { Leva } from 'leva'
@@ -26,15 +26,14 @@ export default function App()
     // const aspect = size.width / size.height
 
 
-    const orthographicCameraSettings = {
-        left: - h * aspect / 2,
-        right: h * aspect / 2,
-        top: h / 2,
-        bottom: - h / 2,
-        near: 1,
-        far: 1000
-    }
-
+    // const orthographicCameraSettings = {
+    //     left: - h * aspect / 2,
+    //     right: h * aspect / 2,
+    //     top: h / 2,
+    //     bottom: - h / 2,
+    //     near: 1,
+    //     far: 1000
+    // }
     
     return <>
 
@@ -42,23 +41,24 @@ export default function App()
         <button onClick={() => store.enterAR()}>Enter AR</button>
 
         {/* <Leva collapsed /> */}
-        <Canvas gl={{ preserveDrawingBuffer: true }} >
+        <Canvas 
+            gl={{ preserveDrawingBuffer: true }
+        } >
 
             <XR store={ store }>
                 {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
-                <XROrigin position-z={ 256 }/> 
+                <XROrigin position-z={ 16 }/> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
-                    {/* <perspectiveCamera
+                    {/* remember orbit controls will override any rotation set on the camera, so instead, use position: */}
+                    <PerspectiveCamera
                         makeDefault
                         fov={45}
-                        near={100}
-                        far={10000}
-                        position={[0, 0, 0]}
-                        rotation={ [0, 0, 0] }
-                        up={[0, 0, 0]}
-                    /> */}
+                        near={1}
+                        far={1000}
+                        position={[0, 32, -8]}
+                    /> 
 
                     {/* <OrthographicCamera 
                         // makeDefault 
@@ -71,7 +71,7 @@ export default function App()
                         up={ [ 0, 1, 0 ] }
                     /> */}
                     
-                    <OrbitControls target={[0, 0, 0]} position0={[0, 0, 0]}/>
+                    <OrbitControls target={[ 0, 0, 0 ]}/>
                    
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 
