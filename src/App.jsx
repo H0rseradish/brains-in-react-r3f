@@ -1,7 +1,8 @@
 import { useMemo, Suspense } from 'react'
 import { Canvas, useThree } from '@react-three/fiber'
-import { PerspectiveCamera } from 'three';
+// check out import of Orbit Controls
 import { OrthographicCamera, OrbitControls } from "@react-three/drei";
+
 import { XROrigin, createXRStore, XR} from '@react-three/xr'
 import { Leva } from 'leva'
 import NrrdVolumeDisplay from "./NrrdVolumeDisplayv2DreiShaderMat.jsx"
@@ -49,15 +50,15 @@ export default function App()
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
-                    <perspectiveCamera
+                    {/* <perspectiveCamera
                         makeDefault
-                        fov={75}
-                        near={1}
-                        far={5000}
+                        fov={45}
+                        near={100}
+                        far={10000}
                         position={[0, 0, 0]}
                         rotation={ [0, 0, 0] }
                         up={[0, 0, 0]}
-                    />
+                    /> */}
 
                     {/* <OrthographicCamera 
                         // makeDefault 
@@ -70,7 +71,7 @@ export default function App()
                         up={ [ 0, 1, 0 ] }
                     /> */}
                     
-                    <OrbitControls target={[0, 0, 0]}/>
+                    <OrbitControls target={[0, 0, 0]} position0={[0, 0, 0]}/>
                    
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 

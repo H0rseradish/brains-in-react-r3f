@@ -111,13 +111,15 @@ void main() {
     // vec3 rayDirection = rayDirLocal;
 
 
-
-    
-
     // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeSize]
 
-    vec3 boxMinBounds =  vec3(0.0); // because the volume is centered at the origin, so the min bounds are at -0.5 * uVolumeSize and the max bounds are at +0.5 * uVolumeSize
-    vec3 boxMaxBounds = uVolumeSize;
+    // vec3 boxMinBounds =  vec3(0.0); 
+    // centering the box/volume
+    vec3 boxMinBounds = - 0.5 * uVolumeSize;
+
+    // vec3 boxMaxBounds = uVolumeSize;
+    // centering the box/volume ... 
+    vec3 boxMaxBounds = 0.5 * uVolumeSize;
 
     // Precompute inverse of ray direction to avoid repeated division in the slab method:
     vec3 invDir = 1.0 / rayDirection;
@@ -159,15 +161,14 @@ void main() {
     if (stepCount < 1) discard;
 
 
-    // For PERSPECTIVE: Starting location and steps in texture coordinates (volume coords normalized by uVolumeSize)
-    // vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeSize) / uVolumeSize;//broke it
-    vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeSize;
+    // For PERSPECTIVE: The starting location and the steps in texture coordinates (volume coords normalized by uVolumeSize)
+
+    // because am centering the box/volume so need to set the raymarch start accordingly
+    vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeSize) / uVolumeSize;
+    // vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeSize;
+
     vec3 rayStep = (rayDirection / uVolumeSize) * (rayLength / float(stepCount));
 
-    // "For testing: show the number of steps. This helps to establish
-    // whether the rays are correctly oriented"
-    //'gl_FragColor = vec4(0.0, float(stepCount) / 1.0 / uVolumeSize.x, 1.0, 1.0);
-    //'return;
 
     /*
     ** THE SAMPLING - separated out of the raycasting?????? except that it happens in the loop so NO.
@@ -182,6 +183,7 @@ void main() {
 
     // if there isn't a hit:
     if (!hit) discard;
+    
 
     /*
     ** SHADING

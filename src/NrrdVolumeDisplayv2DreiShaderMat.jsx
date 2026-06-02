@@ -145,9 +145,9 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
     return (
         // scale? NOOOOOOOO!!!!! Because it conflicts with all the shader maths!!!
-        // this rotation though... and orbit controls rotate origin is at centre of scene...
+        // this rotation though... and orbit controls rotate origin is at centre of scene...Math.PI * 0.5
         // <group scale={1}>
-        <group scale={ 2 } position-z={ -256 } rotation={ [Math.PI * 0.5, 0, 0] }>
+        <group scale={2} position-z={0} rotation={ [0, 0, 0] }>
         
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
