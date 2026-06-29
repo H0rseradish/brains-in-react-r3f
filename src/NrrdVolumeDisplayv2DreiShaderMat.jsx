@@ -36,7 +36,7 @@ const BrainMaterial = shaderMaterial(
         // plus some hardcoded values - these are not working here? should they be declared in the jsx though and not memoised in my uniforms useMemo??? copilot: think they should be declared in the jsx and not memoised in my uniforms useMemo because they are not changing and do not need to be memoised, but they do need to be declared here because they are used as uniforms in the shader and need to be defined for the shaderMaterial:
         uIsoSurfaceThreshold: 0,
         uColorMapValueRange: new Vector2(),
-        uCameraPosition: new Vector3(),
+        // uCameraPosition: new Vector3(),
     },
     vertexShader,
     fragmentShader
@@ -67,9 +67,9 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     //possibly dont need this now because: I want the head to be larger than life size... Hoever this setting this would however makes the scale transferable to other MRI scans: because spacing is set from the metadata in the .nrrd file:
     const [spacing, setSpacing] = useState({ x: 1, y: 1, z: 1 });
 
-    //needed for perspective camera raymarching:
-    const cameraPosition = useThree((state) => state.camera.position); 
-    console.log(cameraPosition);
+    //needed for perspective camera raymarching:EXCEPT CAMERAPOSITION IS AVAILABLE AS AN ATTRIBUTE SO NO NEED FOR THIS?
+    // const cameraPosition = useThree((state) => state.camera.position); 
+    // console.log(cameraPosition);
 
     // colorMap: with useLoader from r3f - remember it's a hook too!:
     const colorMapTexture = useLoader(TextureLoader, colorMapURL);
@@ -90,7 +90,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         // Hardcoded ISO threshold which defines the intensity level at which a surface exists:
         uIsoSurfaceThreshold: { value: 0.001},
         uColorMapValueRange: { value: new Vector2(0, 2) }, 
-        uCameraPosition: { value: new Vector3() }
+        // uCameraPosition: { value: new Vector3() }
 
     }), [])
 
@@ -194,11 +194,11 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                         // uVolumeSize = { physicalSize }
 
                         // for perspective scalable fragment shader -  is this going to work?:
-                        uVolumeDimensions = { physicalSize }
+                        uVolumeDimensions = { volumeDimensions }
                         uVolumeScaledPhysicalSize = { physicalSize }
                         
                         uColorMapTexture = { colorMapTexture }
-                        uCameraPosition = { cameraPosition }
+                        // uCameraPosition = { cameraPosition }
                         side={ BackSide }
                     />
                 </mesh>

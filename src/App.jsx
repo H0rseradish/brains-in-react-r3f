@@ -47,7 +47,7 @@ export default function App()
 
             <XR store={ store }>
                 {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
-                <XROrigin position-z={ 16 }/> 
+                <XROrigin position-z={ 1 }/> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
@@ -56,8 +56,8 @@ export default function App()
                         makeDefault
                         fov={45}
                         near={0.1}
-                        far={1000}
-                        position={[0, 8, -4]}
+                        far={100}
+                        position={[0, 0.5, -0.25]}
                     /> 
 
                     {/* <OrthographicCamera 

@@ -3,11 +3,12 @@
 precision highp float;
 precision mediump sampler3D;
 
-// uniform vec3 uCameraPosition; // for perspective
+// uniform vec3 uCameraPosition; // for perspective - but its available anyway as attribute so no need to pass it in!
 
 // Need both these?:
 uniform vec3 uVolumeDimensions;
 uniform vec3 uVolumeScaledPhysicalSize;
+
 uniform float uVolumeScaleFactor;
 
 uniform float uIsoSurfaceThreshold;
@@ -21,16 +22,14 @@ varying vec4 vNearPosition;
 varying vec4 vFarPosition;
 varying vec3 vWorldPosition;
 
-// #include ../includes/sampleVolume.glsl
-
 // The maximum distance through our rendering volume is sqrt(3).
 const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
 const int REFINEMENT_STEPS = 4;
 
-//Step size relative to volume size: smaller values than 1.0 slow the frame rate unacceptably:
+//Step size is relative to scaled volume size?: if volumeDimensions then smaller values than 1.0 would slow the frame rate unacceptably:
 const float RELATIVE_STEP_SIZE = 0.0005;
 //---------------
-// These can come in as uniforms or not at all ?:
+// These could come in as uniforms or not at all ?:
 // they are overidden in the lighting function anyway, so...?
 // vec4 ambient_color = vec4(0.2, 0.4, 0.2, 1.0);
 // vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
@@ -39,7 +38,7 @@ const float RELATIVE_STEP_SIZE = 0.0005;
 float shininess = 40.0;
 
 
-// Functions are declared BEFORE use because order matters - maybe move the actual definitions above void main to be Bruno-esque??) and RENAME also. OR as includes???
+// Functions are declared BEFORE use - because order matters:
 
 bool raycastIsoSurface(
     vec3 rayStartVolumeCoords, 
@@ -49,8 +48,6 @@ bool raycastIsoSurface(
     out float hitValue,
     out vec3 hitCoords
 ); 
-
-// float sampleVolume(vec3 volumeCoords); 
 
 vec4 addLighting(
     float scalarValue, 
@@ -69,8 +66,6 @@ float sampleVolume(
     ); 
 
 
-
-
 void main() {
 
     // Declare outs:
@@ -87,19 +82,7 @@ void main() {
     // Normalize clipping plane info from vertex shader:
     vec3 nearPosition = vNearPosition.xyz / vNearPosition.w;
     vec3 farPosition = vFarPosition.xyz / vFarPosition.w;
-    //The ray between these is the camera ray, so do not need uCameraPosition to calculate the ray direction, as the ray direction is from near to far, so from ray origin to ray end, so can just do far - near, (below). This is a bit different from the orthographic case where the ray direction is the same for all rays and is just from camera to position.
-
-    //--------
-    // World  space ray:
-    // vec3 rayOriginWorld = cameraPosition;
-    
-    // vec3 rayDirectionWorld = normalize(vWorldPosition - cameraPosition);
-
-    //Convert to local space
-   
-    
-
-
+    // The ray between these is the camera ray, so do not need uCameraPosition to calculate the ray direction, as the ray direction is from near to far, so from ray origin to ray end, so can just do far - near, (below). This is a bit different from the orthographic case where the ray direction is the same for all rays and is just from camera to position.
     //--------------
 
     // COMPUTE ENTRY/EXIT POINTS (OF BOX) USING PERSPECTIVE RAYS:
@@ -116,15 +99,15 @@ void main() {
     // vec3 rayDirection = rayDirLocal;
 
 
-    // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeDimensions]
+    // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeScaledPhysicalSize]
 
     // vec3 boxMinBounds =  vec3(0.0); 
     // centering the box/volume
-    vec3 boxMinBounds = - 0.5 * uVolumeDimensions;
+    vec3 boxMinBounds = - 0.5 * uVolumeScaledPhysicalSize;
 
     // vec3 boxMaxBounds = uVolumeDimensions;
     // centering the box/volume ... 
-    vec3 boxMaxBounds = 0.5 * uVolumeDimensions;
+    vec3 boxMaxBounds = 0.5 * uVolumeScaledPhysicalSize;
 
     // Precompute inverse of ray direction to avoid repeated division in the slab method:
     vec3 invDir = 1.0 / rayDirection;
@@ -160,25 +143,26 @@ void main() {
 
     // Currently, as uVolumeDimensions gets smaller,:
     // 1. raylength gets smaller, 2. stepcount drops, so ray takes fewer samples so render gaps grow...
-    int stepCount = int(rayLength / RELATIVE_STEP_SIZE + 0.5);
-    if (stepCount < 1) discard;
+    // int stepCount = int(rayLength / RELATIVE_STEP_SIZE + 0.5);
+    // if (stepCount < 1) discard;
 
     // Alternative:
-    // float rayLengthNorm = length((rayExitPosition - rayEntryPosition) / uVolumePhysicalSize);
-    // float maxDimensions = max(max(uVolumeDimensions.x, uVolumeDimensions.y), uVolumeDimensions.z);
+    float rayLengthNorm = length((rayExitPosition - rayEntryPosition) / uVolumeScaledPhysicalSize);
 
-    // int stepCount = int(rayLengthNorm * maxDimensions * 1.5 + 0.5);
-    // if (stepCount < 1) discard;
+    float maxDimensions = max(max(uVolumeDimensions.x, uVolumeDimensions.y), uVolumeDimensions.z);
+
+    int stepCount = int(rayLengthNorm * maxDimensions * 1.5 + 0.5);
+    if (stepCount < 1) discard;
 
 
     // For PERSPECTIVE: The starting location and the steps in texture coordinates (volume coords normalized by uVolumeDimensions)
 
     // because am centering the box/volume so need to set the raymarch start accordingly
-    vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeDimensions) / uVolumeDimensions;
+    vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeScaledPhysicalSize) / uVolumeScaledPhysicalSize;
     // vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeDimensions;
 
     // Currently, as uVolumeDimensions gets smaller, rayStep gets bigger, so render gaps grow... (see also int stepCount) above...
-    vec3 rayStep = (rayDirection / uVolumeDimensions) * (rayLength / float(stepCount));
+    vec3 rayStep = (rayDirection / uVolumeScaledPhysicalSize) * (rayLength / float(stepCount));
 
 
     /*
@@ -201,6 +185,8 @@ void main() {
 
     // Define the size of the step between normal samples
     // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
+    // vec3 normalSampleStep = 1.5 / uVolumeScaledPhysicalSize;
+    //Alt:
     vec3 normalSampleStep = 1.5 / uVolumeDimensions;
 
     // add LIGHTING
