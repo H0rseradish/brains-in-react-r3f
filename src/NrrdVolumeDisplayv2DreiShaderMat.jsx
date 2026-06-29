@@ -15,17 +15,22 @@ import { Perf } from 'r3f-perf';
 // VolumeRenderShader1 is here: https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js
 
 import vertexShader from './shaders/brainVolume/vertex-perspective.glsl'
-import fragmentShader from './shaders/brainVolume/fragment-perspective.glsl'
+import fragmentShader from './shaders/brainVolume/fragment-perspective-scalable.glsl'
 
 
-//this was originally to scale the head burt I am not sure that it does that.. So was originally called METERES_TO_CM:
-const FRIG_FACTOR = 0.01;
+//this was originally to scale the head burt I am not sure that it does that.. (So was originally called METRES_T0_CM ->> need to pass in as new uniform I think.. and use to deteremine step s in the fragment shader, to make the code transferable!
+const FRIG_FACTOR = 0.001;
 
 // the drei helper: 'new' is not required:
 const BrainMaterial = shaderMaterial(
     // can pass uniforms values as props but ref better?  but must be defined here:
     {
-        uVolumeSize: new Vector3(),
+        // uVolumeSize: new Vector3(),
+        //leaving the above for previous fragment shaders even though its a duplicate
+
+        uVolumeDimensions: new Vector3(),
+        uVolumeScaledPhysicalSize: new Vector3(),
+        uVolumeScaleFactor: 0,
         uColorMapTexture: null,
         uVolumeDataTexture: null,
         // plus some hardcoded values - these are not working here? should they be declared in the jsx though and not memoised in my uniforms useMemo??? copilot: think they should be declared in the jsx and not memoised in my uniforms useMemo because they are not changing and do not need to be memoised, but they do need to be declared here because they are used as uniforms in the shader and need to be defined for the shaderMaterial:
@@ -53,7 +58,9 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     
     
     // state needed for jsx:
-    const [volumeSize, setVolumeSize] = useState(null);
+    // const [volumeSize, setVolumeSize] = useState(null);
+    const [volumeDimensions, setVolumeDimensions] = useState(null);
+
     //because the voume size in the real world would be 436 metres high... because 1 unit = 1 meter:
     const [physicalSize, setPhysicalSize] = useState(null);
 
@@ -72,12 +79,16 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     const uniforms = useMemo(() => (
     {
         // with Vector3() etc here means must use set() elsewhere so not re-creating 
-        uVolumeSize: { value: new Vector3() }, // the volume size('lengths')
+        // uVolumeSize: { value: new Vector3() }, // the volume size('lengths')
+
+        uVolumeDimensions: { value: new Vector3() }, // the volume size('lengths')
+        uVolumeScaledPhysicalSize: { value: new Vector3() }, // the physical size of the volume
+        uVolumeScaleFactor: {value: FRIG_FACTOR },
         //nb re-creating the vectors elsewhere:
         uColorMapTexture: { value: null }, // cm_data is colormap too... - 
         uVolumeDataTexture: { value: null }, 
         // Hardcoded ISO threshold which defines the intensity level at which a surface exists:
-        uIsoSurfaceThreshold: { value: 0.15},
+        uIsoSurfaceThreshold: { value: 0.001},
         uColorMapValueRange: { value: new Vector2(0, 2) }, 
         uCameraPosition: { value: new Vector3() }
 
@@ -92,35 +103,38 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
             //convert datatype to Float32Array from uint8 or uint16, which is how Tirso's data was - (was there an option for datatype in 3dslicer?? )
             const volumeData = new Float32Array(volume.data);
-            // console.log(volume.data)// ok this worked!
-
-            // set the volume (model) lengths in each direction:
-            // const volumeSize = [
-            //         volume.xLength,
-            //         volume.yLength,
-            //         volume.zLength
-            //     ];
-            // // Ref for the shaders, state for the JSX!: But do I really need both
-            // volumeSizeRef.current = volumeSize;
+            // console.log(volume.data)
           
-            setVolumeSize({
+            // setVolumeSize({
+            //     x: volume.xLength,
+            //     y: volume.yLength,
+            //     z: volume.zLength
+            // });
+            //duplication to keep the old fragment shaders working...
+
+            setVolumeDimensions({
                 x: volume.xLength,
                 y: volume.yLength,
                 z: volume.zLength
             });
-            // from the .nrrd file metadata so this would make my code transferable...
+
+            // from the .nrrd file metadata so this would make my code transferable...(NB in this file -the 0.5mm MNI- the value is 0.5 obviously?)
             setSpacing({
                 x: volume.spacing[0],
                 y: volume.spacing[1],
                 z: volume.spacing[2]
             });
+            console.log(volume.spacing)
+
             // calculate the physical size of the volume based on its dimensions and spacing:
             setPhysicalSize({
-                x: volume.xLength * volume.spacing[0] * FRIG_FACTOR, // convert to cm for real world scale
+                x: volume.xLength * volume.spacing[0] * FRIG_FACTOR, // convert to cm for real world scale - doesnt really work?? - because need to change code eleswhere!
                 y: volume.yLength * volume.spacing[1] * FRIG_FACTOR,
                 z: volume.zLength * volume.spacing[2] * FRIG_FACTOR
             });
 
+            console.log(volume.xLength)
+            
 
             // remember do not use the React state inside the thing that sets it!!!!!:
             const texture = new Data3DTexture( volumeData, volume.xLength, volume.yLength, volume.zLength);
@@ -147,26 +161,28 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             // uniforms.uVolumeSize.value.set(volumeSize); 
 
             console.log(volume)
-            const spacingX = volume.spacing[0]; // this is the spacing between voxels in each direction, which is important for the raymarching in the shader to be at the right scale. I will need to pass this to the shader as a uniform as well, so I will need to add it to the uniforms object and set it here.
-            const spacingY = volume.spacing[1];
-            const spacingZ = volume.spacing[2];
-            console.log(spacingX, spacingY, spacingZ)
+
+            // const spacingX = volume.spacing[0]; // this is the spacing between voxels in each direction, which is important for the raymarching in the shader to be at the right scale. I will need to pass this to the shader as a uniform as well, so I will need to add it to the uniforms object and set it here.
+            // const spacingY = volume.spacing[1];
+            // const spacingZ = volume.spacing[2];
+            // console.log(spacingX, spacingY, spacingZ)
         })
-
-
+   
     }, [nrrdUrl, colorMapTexture ])
-        
+
+    //Ok so the 0.5 spacing anfd the scaling (FRIG!) is actually getting used:
+    console.log(physicalSize)
 
     return (
         // scale? NOOOOOOOO!!!!! Because it conflicts with all the shader maths!!!
         // this rotation though... and orbit controls rotate origin is at centre of scene...Math.PI * 0.5
-        // <group scale={1}>
+        // <group scale={1}> scaling here just changes the size of the volume container, the volume render stays at the same size:
         <group>
         
             {/* Just add this here, need to reposition it though!*/}
             { perfVisible ? <Perf position='top-left' /> : null}
             
-            { volumeSize &&
+            { volumeDimensions &&
                 <mesh>
                     {/* set the size of the geometry that 'holds' it according to the size of the volume (model): ie (364, 436, 364 ) for the 0.5 mm NRRD volume (see the nrrd file metadata) Spacing however is 0.5 (space directions metadata) so this needs to be taken into account see comment at bottom */ }
                     {/* <boxGeometry args={ [ volumeSize.x, volumeSize.y, volumeSize.z] } /> */}
@@ -174,7 +190,13 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                     <boxGeometry args={ [ physicalSize.x, physicalSize.y, physicalSize.z] } /> 
                     <brainMaterial 
                         uniforms={ uniforms }
-                        uVolumeSize = { physicalSize }
+                        // for historical fragment shaders:
+                        // uVolumeSize = { physicalSize }
+
+                        // for perspective scalable fragment shader -  is this going to work?:
+                        uVolumeDimensions = { physicalSize }
+                        uVolumeScaledPhysicalSize = { physicalSize }
+                        
                         uColorMapTexture = { colorMapTexture }
                         uCameraPosition = { cameraPosition }
                         side={ BackSide }
@@ -183,7 +205,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             }
 
             {/* debug mesh */}
-            { volumeSize && 
+            { volumeDimensions && 
                 <mesh visible={ true } >
                     <boxGeometry args={[ physicalSize.x, physicalSize.y, physicalSize.z] } />
                     <meshBasicMaterial wireframe={ true } />

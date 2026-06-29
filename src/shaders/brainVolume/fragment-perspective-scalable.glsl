@@ -1,11 +1,14 @@
-// Code from https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js and separated out into fragment.glsl`
+// Code from https://github.com/mrdoob/three.js/blob/master/examples/jsm/shaders/VolumeShader.js and separated out into fragment.glsl
 
 precision highp float;
 precision mediump sampler3D;
 
 // uniform vec3 uCameraPosition; // for perspective
 
-uniform vec3 uVolumeSize;
+// Need both these?:
+uniform vec3 uVolumeDimensions;
+uniform vec3 uVolumeScaledPhysicalSize;
+uniform float uVolumeScaleFactor;
 
 uniform float uIsoSurfaceThreshold;
 uniform vec2 uColorMapValueRange;
@@ -25,7 +28,7 @@ const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
 const int REFINEMENT_STEPS = 4;
 
 //Step size relative to volume size: smaller values than 1.0 slow the frame rate unacceptably:
-const float RELATIVE_STEP_SIZE = 1.0;
+const float RELATIVE_STEP_SIZE = 0.0005;
 //---------------
 // These can come in as uniforms or not at all ?:
 // they are overidden in the lighting function anyway, so...?
@@ -96,7 +99,6 @@ void main() {
    
     
 
-    
 
     //--------------
 
@@ -105,7 +107,7 @@ void main() {
     // For PERSPECTIVE: Ray origin at near-plane intersection:
     // vec3 rayOrigin = nearPosition;
     vec3 rayOrigin = cameraPosition;
-    // vec3 rayOrigin = rayOriginLocal + 0.5 * uVolumeSize;
+    // vec3 rayOrigin = rayOriginLocal + 0.5 * uVolumeDimensions;
     
 
     // For PERSPECTIVE: Direction into the scene (towards the far-plane intersection):
@@ -114,15 +116,15 @@ void main() {
     // vec3 rayDirection = rayDirLocal;
 
 
-    // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeSize]
+    // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeDimensions]
 
     // vec3 boxMinBounds =  vec3(0.0); 
     // centering the box/volume
-    vec3 boxMinBounds = - 0.5 * uVolumeSize;
+    vec3 boxMinBounds = - 0.5 * uVolumeDimensions;
 
-    // vec3 boxMaxBounds = uVolumeSize;
+    // vec3 boxMaxBounds = uVolumeDimensions;
     // centering the box/volume ... 
-    vec3 boxMaxBounds = 0.5 * uVolumeSize;
+    vec3 boxMaxBounds = 0.5 * uVolumeDimensions;
 
     // Precompute inverse of ray direction to avoid repeated division in the slab method:
     vec3 invDir = 1.0 / rayDirection;
@@ -156,20 +158,27 @@ void main() {
     vec3 rayExitPosition = rayOrigin + rayDirection * rayExitDistance;
     float rayLength = rayExitDistance - rayEntryDistance;
 
-    // Currently, as uVolumeSize gets smaller,:
+    // Currently, as uVolumeDimensions gets smaller,:
     // 1. raylength gets smaller, 2. stepcount drops, so ray takes fewer samples so render gaps grow...
     int stepCount = int(rayLength / RELATIVE_STEP_SIZE + 0.5);
     if (stepCount < 1) discard;
 
+    // Alternative:
+    // float rayLengthNorm = length((rayExitPosition - rayEntryPosition) / uVolumePhysicalSize);
+    // float maxDimensions = max(max(uVolumeDimensions.x, uVolumeDimensions.y), uVolumeDimensions.z);
 
-    // For PERSPECTIVE: The starting location and the steps in texture coordinates (volume coords normalized by uVolumeSize)
+    // int stepCount = int(rayLengthNorm * maxDimensions * 1.5 + 0.5);
+    // if (stepCount < 1) discard;
+
+
+    // For PERSPECTIVE: The starting location and the steps in texture coordinates (volume coords normalized by uVolumeDimensions)
 
     // because am centering the box/volume so need to set the raymarch start accordingly
-    vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeSize) / uVolumeSize;
-    // vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeSize;
+    vec3 rayStartVolumeCoords = (rayEntryPosition + 0.5 * uVolumeDimensions) / uVolumeDimensions;
+    // vec3 rayStartVolumeCoords = rayEntryPosition / uVolumeDimensions;
 
-    // Currently, as uVolumeSize gets smaller, rayStep gets bigger, so render gaps grow... (see also int stepCount) above...
-    vec3 rayStep = (rayDirection / uVolumeSize) * (rayLength / float(stepCount));
+    // Currently, as uVolumeDimensions gets smaller, rayStep gets bigger, so render gaps grow... (see also int stepCount) above...
+    vec3 rayStep = (rayDirection / uVolumeDimensions) * (rayLength / float(stepCount));
 
 
     /*
@@ -192,7 +201,7 @@ void main() {
 
     // Define the size of the step between normal samples
     // gradientStep defines how far apart the samples are when estimating the gradient (the normal(!)) its the step between each compute of the gradient. The value 1.5 is a compromise for the smoothing between noise/artefacts and loss of detail. Should I call it normalSampleStep? or is that a step too far! 
-    vec3 normalSampleStep = 1.5 / uVolumeSize;
+    vec3 normalSampleStep = 1.5 / uVolumeDimensions;
 
     // add LIGHTING
     vec4 lighting = addLighting(hitValue, hitCoords, normalSampleStep, rayDirection, shadedScalarValue);

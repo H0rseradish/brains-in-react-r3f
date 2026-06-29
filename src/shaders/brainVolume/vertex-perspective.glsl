@@ -46,18 +46,18 @@ void main() {
     //OK I mixed up this 0.5 centering with the 0.5 scaling in my head... it should be done in the fragment according to copilot
 
     // attempting to sort the centering issue here instead of in the fragment calcs: this centers the volume in local space, so that the ray marching is done in local space and the ray marching steps are consistent across the volume. Otherwise, the ray marching steps would be different at different positions in the volume, which is not what we want.
-    vec3 volumeOffset = 0.5 * uVolumeSize;
+    // vec3 volumeOffset = 0.5 * uVolumeSize;
 
 
     // Now project (transform) back to local coords to do the ray marching in local space:
     vNearPosition = viewToLocalMatrix * nearViewPosition;
-    vNearPosition.xyz += volumeOffset;
+    // vNearPosition.xyz += volumeOffset;
 
     vFarPosition = viewToLocalMatrix * farViewPosition;
-    vFarPosition.xyz += volumeOffset;
+    // vFarPosition.xyz += volumeOffset;
 
     // For consistency with vFarPosition and vNearPosition offsets:
-    vPosition = position + volumeOffset;
+    //  
 
     // For now until I sort the scaling issue:
     vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;

@@ -55,9 +55,9 @@ export default function App()
                     <PerspectiveCamera
                         makeDefault
                         fov={45}
-                        near={1}
+                        near={0.1}
                         far={1000}
-                        position={[0, 32, -8]}
+                        position={[0, 8, -4]}
                     /> 
 
                     {/* <OrthographicCamera 
@@ -71,7 +71,7 @@ export default function App()
                         up={ [ 0, 1, 0 ] }
                     /> */}
                     
-                    <OrbitControls target={[ 0, 0, 0 ]}/>
+                    <OrbitControls target={[ 0, 0, 0 ]} />
                    
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
 
