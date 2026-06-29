@@ -3,7 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber'
 // check out import of Orbit Controls
 import { OrthographicCamera, PerspectiveCamera, OrbitControls } from "@react-three/drei";
 
-import { XROrigin, createXRStore, XR} from '@react-three/xr'
+import { XROrigin, createXRStore, XR, useXR } from '@react-three/xr'
 import { Leva } from 'leva'
 import NrrdVolumeDisplay from "./NrrdVolumeDisplayv2DreiShaderMat.jsx"
 
@@ -11,6 +11,9 @@ export default function App()
 {
     // now memoized... !!!!
     const store = useMemo(() => createXRStore(), [])
+
+
+    // console.log(store.getState())
     // frustum height and other settings from Mr Doob - they worked in three.js...
 
     // these!!!!: what is the way?
@@ -44,21 +47,26 @@ export default function App()
         <Canvas 
             gl={{ preserveDrawingBuffer: true }
         } >
-
+            
             <XR store={ store }>
+
                 {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
-                <XROrigin /> 
+                <XROrigin position={[ 0, -1.6, -0.25 ]}/> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
-                    {/* remember orbit controls will override any rotation set on the camera, so instead, use position: */}
-                    <PerspectiveCamera
+
+                    { store && 
+                        <PerspectiveCamera
                         makeDefault
                         fov={45}
                         near={0.1}
                         far={100}
-                        position={[0, 0.5, -0.25]}
+                        position={[ 0, 0.5, -0.25 ]}
                     /> 
+                    }
+                    {/* remember orbit controls will override any rotation set on the camera, so instead, use position: */}
+               
 
                     {/* <OrthographicCamera 
                         // makeDefault 
@@ -71,6 +79,7 @@ export default function App()
                         up={ [ 0, 1, 0 ] }
                     /> */}
                     
+                    {/** (Orbit controls just ignored in XR) */}
                     <OrbitControls target={[ 0, 0, 0 ]} />
                    
                     <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
