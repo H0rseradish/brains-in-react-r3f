@@ -27,7 +27,7 @@ const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
 const int REFINEMENT_STEPS = 4;
 
 //Step size is relative to scaled volume size?: if volumeDimensions then smaller values than 1.0 would slow the frame rate unacceptably:
-const float RELATIVE_STEP_SIZE = 0.0005;
+const float RELATIVE_STEP_SIZE = 0.1;
 //---------------
 // These could come in as uniforms or not at all ?:
 // they are overidden in the lighting function anyway, so...?
@@ -151,7 +151,7 @@ void main() {
 
     float maxDimensions = max(max(uVolumeDimensions.x, uVolumeDimensions.y), uVolumeDimensions.z);
 
-    int stepCount = int(rayLengthNorm * maxDimensions * 1.5 + 0.5);
+    int stepCount = int(rayLengthNorm * maxDimensions * RELATIVE_STEP_SIZE + 0.5);
     if (stepCount < 1) discard;
 
 

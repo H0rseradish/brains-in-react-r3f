@@ -51,7 +51,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
     // leva controls
     const { perfVisible } = useControls({
-        perfVisible: false
+        perfVisible: true
     })
     
     const volumeDataTextureRef = useRef(null);
@@ -180,7 +180,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         <group>
         
             {/* Just add this here, need to reposition it though!*/}
-            { perfVisible ? <Perf position='top-left' /> : null}
+            { perfVisible ? <Perf position='bottom-left' /> : null}
             
             { volumeDimensions &&
                 <mesh>

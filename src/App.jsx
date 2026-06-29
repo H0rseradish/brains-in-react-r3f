@@ -15,10 +15,10 @@ export default function App()
 
     // these!!!!: what is the way?
     // apparently the unit is 1m in xr!!!! so NOOOO?!!!! so the frustum height is 512 metres?!!!!! Need to deal with the scaling- need to understand it first.
-    const h = 512; 
+    // const h = 512; 
 
     // three-ish but not r3f-ish:
-    const aspect = window.innerWidth / window.innerHeight;
+    // const aspect = window.innerWidth / window.innerHeight;
 
     /// r3f has a better way: NOOOOOOOOOOOO!!!!!! or not here anyway - App is not within the Canvas element... so r3f hooks wont work...(useThree())
     // 
@@ -47,7 +47,7 @@ export default function App()
 
             <XR store={ store }>
                 {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
-                <XROrigin position-z={ 1 }/> 
+                <XROrigin /> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
