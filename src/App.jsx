@@ -29,7 +29,7 @@ export default function App()
             <XR store={ store }>
 
                 {/* XROrigin is user's XR space - so if I wanted my volume to always placed relative to the user then I could make my group a child. If relative to the general scene then NOT in here. NB Volume does not move WITH the user, only on refresh. Need to consider if this is the best way - may need to change later*/}
-                <XROrigin position={[0, -1.3, 1.0]}/> 
+                <XROrigin position={[0, -1.5, 1.0]} rotationY={ 0 } /> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>

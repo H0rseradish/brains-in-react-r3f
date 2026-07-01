@@ -19,7 +19,7 @@ import fragmentShader from './shaders/brainVolume/fragment-perspective-scalable.
 
 
 //this was originally to scale the head burt I am not sure that it does that.. (So was originally called METRES_T0_CM ->> need to pass in as new uniform I think.. and use to deteremine step s in the fragment shader, to make the code transferable!
-const FRIG_FACTOR = 0.001;
+const SCALE_FACTOR = 0.001;
 
 // the drei helper: 'new' is not required:
 const BrainMaterial = shaderMaterial(
@@ -83,7 +83,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
         uVolumeDimensions: { value: new Vector3() }, // the volume size('lengths')
         uVolumeScaledPhysicalSize: { value: new Vector3() }, // the physical size of the volume
-        uVolumeScaleFactor: {value: FRIG_FACTOR },
+        uVolumeScaleFactor: {value: SCALE_FACTOR },
         //nb re-creating the vectors elsewhere:
         uColorMapTexture: { value: null }, // cm_data is colormap too... - 
         uVolumeDataTexture: { value: null }, 
@@ -128,9 +128,9 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
             // calculate the physical size of the volume based on its dimensions and spacing:
             setPhysicalSize({
-                x: volume.xLength * volume.spacing[0] * FRIG_FACTOR, // convert to cm for real world scale - doesnt really work?? - because need to change code eleswhere!
-                y: volume.yLength * volume.spacing[1] * FRIG_FACTOR,
-                z: volume.zLength * volume.spacing[2] * FRIG_FACTOR
+                x: volume.xLength * volume.spacing[0] * SCALE_FACTOR, // convert to cm for real world scale - doesnt really work?? - because need to change code eleswhere!
+                y: volume.yLength * volume.spacing[1] * SCALE_FACTOR,
+                z: volume.zLength * volume.spacing[2] * SCALE_FACTOR
             });
 
             console.log(volume.xLength)
@@ -160,7 +160,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
             // remember do not use the React state inside the thing that sets it!!!!!
             // uniforms.uVolumeSize.value.set(volumeSize); 
 
-            console.log(volume)
+            // console.log(volume)
 
             // const spacingX = volume.spacing[0]; // this is the spacing between voxels in each direction, which is important for the raymarching in the shader to be at the right scale. I will need to pass this to the shader as a uniform as well, so I will need to add it to the uniforms object and set it here.
             // const spacingY = volume.spacing[1];
@@ -170,7 +170,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
    
     }, [nrrdUrl, colorMapTexture ])
 
-    //Ok so the 0.5 spacing anfd the scaling (FRIG!) is actually getting used:
+    //Ok so the 0.5 spacing anfd the scaling (SCALE!) is actually getting used:
     console.log(physicalSize)
 
     return (
