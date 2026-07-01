@@ -14,29 +14,7 @@ export default function App()
 
 
     // console.log(store.getState())
-    // frustum height and other settings from Mr Doob - they worked in three.js...
-
-    // these!!!!: what is the way?
-    // apparently the unit is 1m in xr!!!! so NOOOO?!!!! so the frustum height is 512 metres?!!!!! Need to deal with the scaling- need to understand it first.
-    // const h = 512; 
-
-    // three-ish but not r3f-ish:
-    // const aspect = window.innerWidth / window.innerHeight;
-
-    /// r3f has a better way: NOOOOOOOOOOOO!!!!!! or not here anyway - App is not within the Canvas element... so r3f hooks wont work...(useThree())
-    // 
-    // const { size } = useThree()
-    // const aspect = size.width / size.height
-
-
-    // const orthographicCameraSettings = {
-    //     left: - h * aspect / 2,
-    //     right: h * aspect / 2,
-    //     top: h / 2,
-    //     bottom: - h / 2,
-    //     near: 1,
-    //     far: 1000
-    // }
+    
     
     return <>
 
@@ -50,39 +28,31 @@ export default function App()
             
             <XR store={ store }>
 
-                {/* ie 256 metres away...!!!!!!!! THIS IS DAFT? */}
-                <XROrigin position={[ 0, -1.6, -0.25 ]}/> 
+                {/* XROrigin is user's XR space - so if I wanted my volume to always placed relative to the user then I could make my group a child. If relative to the general scene then NOT in here. NB Volume does not move WITH the user, only on refresh. Need to consider if this is the best way - may need to change later*/}
+                <XROrigin position={[0, -1.3, 1.0]}/> 
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
 
-                    { store && 
-                        <PerspectiveCamera
+                    <PerspectiveCamera
                         makeDefault
                         fov={45}
                         near={0.1}
                         far={100}
                         position={[ 0, 0.5, -0.25 ]}
                     /> 
-                    }
-                    {/* remember orbit controls will override any rotation set on the camera, so instead, use position: */}
-               
-
-                    {/* <OrthographicCamera 
-                        // makeDefault 
-                        args={ [orthographicCameraSettings] }
-                        // positioning of orthographic camera does not change scale,ONLY WHAT IS VISIBLE IN THE FRUSTUM!
-                        // a value (any value) in position seems to be necessary for orbit controls to work - but WHY???
-                        position={ [ 0, 0, 0.1 ] }
                     
-                        //this up value affects how the orbit controls work... ie which way round:
-                        up={ [ 0, 1, 0 ] }
-                    /> */}
+                    {/* remember orbit controls will override any rotation set on the camera, so instead, use position as above: */}
+
                     
                     {/** (Orbit controls just ignored in XR) */}
                     <OrbitControls target={[ 0, 0, 0 ]} />
-                   
-                    <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
+
+                    <group>
+                        
+                            <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png"/>
+                        
+                    </group>
 
                 </Suspense>
             </XR> 
