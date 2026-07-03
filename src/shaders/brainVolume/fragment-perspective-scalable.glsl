@@ -30,7 +30,7 @@ const int REFINEMENT_STEPS = 4;
 // - I'm going to replace this variable when used in the code below with my scaleRelativeStepSize so I can put a user control that is passed in as the uniform(declared in main because only consts can be declared globally....
 // const float RELATIVE_STEP_SIZE = 0.1;
 
-const float RELATIVE_STEP_SIZE_FACTOR = 100.0; // fudge factor to make step size smaller than the volume scale factor, so that the render is not too sparse , but not too heavy either.
+const float RELATIVE_STEP_SIZE_FACTOR = 20.0; // fudge factor to make step size smaller than the volume scale factor, so that the render is not too sparse , but not too heavy either.
 
 //---------------
 // These could come in as uniforms or not at all ?:
@@ -39,7 +39,7 @@ const float RELATIVE_STEP_SIZE_FACTOR = 100.0; // fudge factor to make step size
 // vec4 diffuse_color = vec4(0.8, 0.2, 0.2, 1.0);
 // vec4 specular_color = vec4(1.0, 1.0, 1.0, 1.0);
 // Still need this one though... or would it be better elsewhere??? Do I want it shiny even?
-float shininess = 20.0;
+float shininess = 1.0;
 
 
 // Functions are declared BEFORE use - because order matters:

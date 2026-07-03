@@ -46,7 +46,7 @@ extend({ BrainMaterial });
 
 
 
-export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } ) 
+export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale} ) 
 {
 
     // leva controls
@@ -55,19 +55,19 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
     })
     
     const volumeDataTextureRef = useRef(null);
-    
+
     
     // state needed for jsx:
     // const [volumeSize, setVolumeSize] = useState(null);
     const [volumeDimensions, setVolumeDimensions] = useState(null);
 
-    //because the voume size in the real world would be 436 metres high... because 1 unit = 1 meter:
+    // because the voume size in the real world would be 436 metres high... because 1 unit = 1 meter:
     const [physicalSize, setPhysicalSize] = useState(null);
 
-    //possibly dont need this now because: I want the head to be larger than life size... Hoever this setting this would however makes the scale transferable to other MRI scans: because spacing is set from the metadata in the .nrrd file:
+    // possibly dont need this as state? - just use from the metadata in the .nrrd file:
     const [spacing, setSpacing] = useState({ x: 1, y: 1, z: 1 });
 
-    //needed for perspective camera raymarching:EXCEPT CAMERAPOSITION IS AVAILABLE AS AN ATTRIBUTE SO NO NEED FOR THIS?
+    // needed for perspective camera raymarching:EXCEPT CAMERAPOSITION IS AVAILABLE AS AN ATTRIBUTE SO NO NEED FOR THIS?
     // const cameraPosition = useThree((state) => state.camera.position); 
     // console.log(cameraPosition);
 
@@ -88,7 +88,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
         uColorMapTexture: { value: null }, // cm_data is colormap too... - 
         uVolumeDataTexture: { value: null }, 
         // Hardcoded ISO threshold which defines the intensity level at which a surface exists:
-        uIsoSurfaceThreshold: { value: 0.001},
+        uIsoSurfaceThreshold: { value: 0.1},
         uColorMapValueRange: { value: new Vector2(0, 2) }, 
         // uCameraPosition: { value: new Vector3() }
 
@@ -118,7 +118,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
                 z: volume.zLength
             });
 
-            // from the .nrrd file metadata so this would make my code transferable...(NB in this file -the 0.5mm MNI- the value is 0.5 obviously?)
+            // from the .nrrd file metadata so this would make my code transferable...(NB in this file -the 0.5mm MNI- the value is 0.5 obviously. Do I even need state for this though?)
             setSpacing({
                 x: volume.spacing[0],
                 y: volume.spacing[1],
@@ -206,7 +206,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, } )
 
             {/* debug mesh */}
             { volumeDimensions && 
-                <mesh visible={ true } >
+                <mesh visible={ false } >
                     <boxGeometry args={[ physicalSize.x, physicalSize.y, physicalSize.z] } />
                     <meshBasicMaterial wireframe={ true } />
                 </mesh>
