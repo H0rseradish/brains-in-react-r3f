@@ -21,6 +21,8 @@ import fragmentShader from './shaders/brainVolume/fragment-perspective-scalable.
 //this was originally to scale the head burt I am not sure that it does that.. (So was originally called METRES_T0_CM ->> need to pass in as new uniform I think.. and use to deteremine step s in the fragment shader, to make the code transferable!
 const SCALE_FACTOR = 0.001;
 
+// Note to self - percentage value has to be divided by 100 to get the scale factor for the volume, because the slider is 0-500 and the scale factor is 0-5. CoPilot: - 'So the scale factor is 0.01 * percentage value. This is done in the Experience.jsx file where the scale state is set'.
+
 // the drei helper: 'new' is not required:
 const BrainMaterial = shaderMaterial(
     // can pass uniforms values as props but ref better?  but must be defined here:
@@ -46,8 +48,9 @@ extend({ BrainMaterial });
 
 
 
-export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale} ) 
+export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale } ) 
 {
+    console.log(scale)
 
     // leva controls
     const { perfVisible } = useControls({
@@ -75,6 +78,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale} )
     const colorMapTexture = useLoader(TextureLoader, colorMapURL);
     // console.log(colorMapTexture);
 
+
     // Alternative with manual Three ShaderMaterial:
     const uniforms = useMemo(() => (
     {
@@ -83,7 +87,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale} )
 
         uVolumeDimensions: { value: new Vector3() }, // the volume size('lengths')
         uVolumeScaledPhysicalSize: { value: new Vector3() }, // the physical size of the volume
-        uVolumeScaleFactor: {value: SCALE_FACTOR },
+        uVolumeScaleFactor: { value: SCALE_FACTOR },
         //nb re-creating the vectors elsewhere:
         uColorMapTexture: { value: null }, // cm_data is colormap too... - 
         uVolumeDataTexture: { value: null }, 

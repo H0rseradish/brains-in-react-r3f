@@ -26,7 +26,7 @@ varying vec3 vWorldPosition;
 const int MAX_STEPS = 887;	// 887 for 512^3, 1774 for 1024^3
 const int REFINEMENT_STEPS = 4;
 
-//Step size is relative to scaled volume size?: if volumeDimensions then smaller values than 1.0 would slow the frame rate unacceptably: 
+//Step size is relative to scaled volume size?: if volumeDimensions then smaller values than 1.0 would slow the frame rate unacceptably 
 // - I'm going to replace this variable when used in the code below with my scaleRelativeStepSize so I can put a user control that is passed in as the uniform(declared in main because only consts can be declared globally....
 // const float RELATIVE_STEP_SIZE = 0.1;
 

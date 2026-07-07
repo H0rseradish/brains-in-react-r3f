@@ -6,16 +6,17 @@ import { useXR } from '@react-three/xr'
 import { Container, Text } from '@react-three/uikit'
 import { Panel, Slider, Button } from '@react-three/uikit-horizon'
 
-function BrainScaleSlider() {
+
+
+
+function BrainScaleSlider({ onValueChange }) {
 
     return (
-        <Slider min={0} max={500} step={50} width={'auto'}/>
+        <Slider min={0} max={500} step={50} width={'auto'} onValueChange={onValueChange} />
     )
 }
 
-export default function UserControls({ store })  {
-
-    
+export default function UserControls({ store, onScaleChange })  {
     //coPilot gave me these!: might come in handy - or not?
     // const { isPresenting } = useXR()
     // const controlsRef = useRef() 
@@ -31,7 +32,12 @@ export default function UserControls({ store })  {
             alignItems="center" 
         >
 
-            <BrainScaleSlider />
+            <BrainScaleSlider 
+                onValueChange={(value) => {
+                    console.log('scale changed to:', value)
+                    onScaleChange(value / 100) // divide by 100 to get scale factor for volume, because slider is 0-500 and scale factor is 0-5
+                }}
+            />
 
             <Text marginTop={ 0 } color="white" anchorX="center">
                 0% = life size

@@ -34,14 +34,14 @@ export default function App()
 
         {/* <Leva collapsed /> */}
         <Canvas 
-            gl={{ preserveDrawingBuffer: true }
-        } >
+            gl={{ preserveDrawingBuffer: true }} 
+        >
             
             <XR store={ store }>
 
                 {/* XROrigin is user's XR space - so if I wanted my volume to always placed relative to the user then I could make my group a child. If relative to the general scene then NOT in here. NB Volume does not move WITH the user, only on refresh. Need to consider if this is the best way - may need to change later
                 NB XROrigin should be outside of suspense unless the origin itself is dependent upon assets being loaded  */ }
-                <XROrigin position={[0, -1.5, 0.7]} rotationY={ 0 }/>
+                <XROrigin  position={[0, -1.5, 0.5]}/>
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
@@ -51,37 +51,16 @@ export default function App()
                         fov={45}
                         near={0.1}
                         far={100}
-                        position={[ 0, 0.5, -0.25 ]}
+                        position={[ -0.5, -0.5, 1.0]}
                     /> 
                     {/* remember orbit controls will override any rotation set on the camera, so instead, use position as above: */}
 
                     
                     {/** (Orbit controls just ignored in XR) */}
-                    <OrbitControls target={[ 0, 0, 0 ]} />
+                    <OrbitControls target={[ 0, 0, 0 ]} enabled={true}/>
 
                     <Experience store={ store } scale={ scale } onScaleChange={ setScale } />
 
-                    {/* <UserControls store={ store } /> */}
-
-                    {/* <group>
-                        
-                            <NrrdVolumeDisplay nrrdUrl="MNI152_T1_1mm_brain.seg.nrrd" colorMapURL="cm_gray.png"/>
-
-                            <mesh 
-                                position={[ -0.3, 0, 0 ]}  
-                                scale={[ 1, 1, 1 ]} 
-                                onClick={(e) => {
-                                    console.log('clicked mesh')
-                                    store.getState().session?.end()
-                                } }
-                            >
-                                <boxGeometry args={[ 0.05, 0.05, 0.05 ]} />
-                                <meshBasicMaterial color="green" />
-                            </mesh>
-
-                            
-                        
-                    </group> */}
 
                 </Suspense>
                 
@@ -91,3 +70,6 @@ export default function App()
         
     </>
 }
+
+//Perspective camera
+// position={[ 0, 0.5, -0.25 ]}
