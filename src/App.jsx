@@ -1,9 +1,9 @@
-import { useMemo, useState, useRef, useEffect, Suspense } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { useMemo, useState, Suspense } from 'react'
+import { Canvas } from '@react-three/fiber'
 // check out import of Orbit Controls
 import { OrthographicCamera, PerspectiveCamera, OrbitControls } from "@react-three/drei";
 
-import { XROrigin, createXRStore, XR, useXR } from '@react-three/xr'
+import { XROrigin, createXRStore, XR } from '@react-three/xr'
 import { Leva } from 'leva'
 
 import NrrdVolumeDisplay from './NrrdVolumeDisplayv2DreiShaderMat.jsx'
@@ -51,7 +51,7 @@ export default function App()
                         fov={45}
                         near={0.1}
                         far={100}
-                        position={[ -0.5, -0.5, 1.0]}
+                        position={[ 0, 0, 0.8]}
                     /> 
                     {/* remember orbit controls will override any rotation set on the camera, so instead, use position as above: */}
 

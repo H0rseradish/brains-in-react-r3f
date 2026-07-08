@@ -11,12 +11,11 @@ export default function Experience({ store }) {
 
   return (
     <>
-
         <UserControls store={store} onScaleChange={setScale}/>
 
         <NrrdVolumeDisplay nrrdUrl="MNI152_T1_1mm_brain.seg.nrrd" colorMapURL="cm_gray.png" scale={scale}/>
 
-        <mesh 
+        {/* <mesh 
             position={[ 0.3, 0, 0 ]}  
             scale={[ 1, 1, 1 ]} 
             onClick={() => {
@@ -26,7 +25,7 @@ export default function Experience({ store }) {
         >
             <boxGeometry args={[ 0.05, 0.05, 0.05 ]} />
             <meshBasicMaterial color="green" />
-        </mesh>
+        </mesh> */}
 
     </>
   )

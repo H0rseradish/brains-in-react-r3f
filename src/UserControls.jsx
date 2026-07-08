@@ -1,7 +1,6 @@
-import { useRef, useState } from 'react'
 
 // Necessary or not?:
-import { useXR } from '@react-three/xr'
+// import { useXR } from '@react-three/xr'
 
 import { Container, Text } from '@react-three/uikit'
 import { Panel, Slider, Button } from '@react-three/uikit-horizon'
@@ -26,7 +25,7 @@ export default function UserControls({ store, onScaleChange })  {
             pixelSize={ 0.001 } 
             width={300} 
             padding={ 20 } 
-            positionTop={ 300 } 
+            positionTop={ 250 } 
             backgroundColor="white"  flexDirection="column" 
             justifyContent="center" 
             alignItems="center" 
