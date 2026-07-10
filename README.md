@@ -1,19 +1,28 @@
-# Interactive Brain project so far 
-
+# Interactive Brain project  
+ 
 Goal: Create a web-based app that will assist educators in teaching neuroanatomy to students using MRI data, with the eventual aim of leveraging Spatialstrates.
 
 Prior knowledge included basic javascript and Three.js, together with some very rudimentary knowledge of React and React Three Fiber. 
 
 It made sense to use these, particularly as Spatialstrates is built on React Three Fiber. 
 
+## Initial steps
 First step was to investigate some of the software in use to display MRI data, supplied in .nii format, primariliy Niivue and 3D Slicer. Once it was established that the data supplied could be displayed as slices in Niivue (and activity data displayed overlaying the brain volume), the next step was to work out how .nii files could be used in three.js. 
 
 An initial search uncovered the Three.js NRRDLoader https://threejs.org/examples/#webgl_loader_nrrd. It was simple to use 3D slicer to convert the.nii file to .nrrd format, and Mr Doob's code was used almost verbatim to render the volume using with three.js. One thing I had to do though was to change the volume data to a Float32Array (from uint16, I think it was).
 
 Currently working on this r3f -> webxr version
 
+## Progress at 9/7/26 
+Volume now renders in correct perspective (was previously only orthographic) in both 3D and in webxr. This was achieved by modifying the fragment shader to take into account the camera position as it relates to the world position. 
+Rudimentary user control of scale has been added and passed as a uniform to the fragment. 
 
-### Brain data
+
+
+
+
+
+## Brain data
 
 The 3D head/brain data is the 'Montreal Neurological Institute (MNI) template' from TemplateFlow "...a publicly available framework for human and non-human brain models. The framework combines an open database with software for access, management, and vetting, allowing scientists to share their resources under FAIR—findable, accessible, interoperable, and reusable—principles." 
 

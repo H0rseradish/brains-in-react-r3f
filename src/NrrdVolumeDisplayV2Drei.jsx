@@ -161,7 +161,7 @@ export default function NrrdVolumeDisplay( { nrrdUrl, colorMapURL, scale } )
 
     return (
         // scale here? NOOOOOOOO!!!!! Because it conflicts with all the shader maths!!!
-        // this rotation though... and orbit controls rotate origin is at centre of scene...Math.PI * 0.5
+        // this rotation though NO ... and orbit controls rotate origin is at centre of scene...
         <group>
         
             {/* Just add this here, need to reposition it though!*/}

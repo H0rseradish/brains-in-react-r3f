@@ -6,7 +6,7 @@ import { OrthographicCamera, PerspectiveCamera, OrbitControls } from "@react-thr
 import { XROrigin, createXRStore, XR } from '@react-three/xr'
 import { Leva } from 'leva'
 
-import NrrdVolumeDisplay from './NrrdVolumeDisplayv2DreiShaderMat.jsx'
+import NrrdVolumeDisplay from './NrrdVolumeDisplayV2Drei.jsx'
 import UserControls from './UserControls.jsx'
 import Experience from './Experience.jsx';
 
@@ -41,7 +41,7 @@ export default function App()
 
                 {/* XROrigin is user's XR space - so if I wanted my volume to always placed relative to the user then I could make my group a child. If relative to the general scene then NOT in here. NB Volume does not move WITH the user, only on refresh. Need to consider if this is the best way - may need to change later
                 NB XROrigin should be outside of suspense unless the origin itself is dependent upon assets being loaded  */ }
-                <XROrigin  position={[0, -1.5, 0.5]}/>
+                <XROrigin position={[0, -1.5, 0.5]}/>
 
                 {/* ensure assets are loaded for the XR with Suspense: */}
                 <Suspense>
@@ -57,7 +57,7 @@ export default function App()
 
                     
                     {/** (Orbit controls just ignored in XR) */}
-                    <OrbitControls target={[ 0, 0, 0 ]} enabled={true}/>
+                    <OrbitControls target={[ 0, 0, 0 ]}  enabled={true}/>
 
                     <Experience store={ store } scale={ scale } onScaleChange={ setScale } />
 

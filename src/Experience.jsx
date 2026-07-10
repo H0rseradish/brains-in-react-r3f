@@ -1,6 +1,6 @@
 import { useState,  } from "react";
 
-import NrrdVolumeDisplay from './NrrdVolumeDisplayv2DreiShaderMat.jsx'
+import NrrdVolumeDisplay from './NrrdVolumeDisplayV2Drei.jsx'
 import UserControls from './UserControls.jsx'
 
 
@@ -10,10 +10,12 @@ export default function Experience({ store }) {
 
 
   return (
-    <>
-        <UserControls store={store} onScaleChange={setScale}/>
+    <group>
+        <UserControls store={store} onScaleChange={setScale} scale={scale} />
 
-        <NrrdVolumeDisplay nrrdUrl="MNI152_T1_1mm_brain.seg.nrrd" colorMapURL="cm_gray.png" scale={scale}/>
+        <NrrdVolumeDisplay nrrdUrl="MNI152_T1_1mm_brain.seg.nrrd" colorMapURL="cm_gray.png" scale={scale} />
+
+        {/* <NrrdVolumeDisplay nrrdUrl="MNI152_T1_0.5mm_delete_segs_0_to_50.seg.nrrd" colorMapURL="cm_viridis.png" scale={scale} /> */}
 
         {/* <mesh 
             position={[ 0.3, 0, 0 ]}  
@@ -27,6 +29,6 @@ export default function Experience({ store }) {
             <meshBasicMaterial color="green" />
         </mesh> */}
 
-    </>
+    </group>
   )
 }

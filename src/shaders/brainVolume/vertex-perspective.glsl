@@ -15,6 +15,7 @@ void main() {
 
     // mat4 viewtransformf = modelViewMatrix;
     // is it worth even making this variable here?
+
     mat4 viewToLocalMatrix = inverse(modelViewMatrix);
 
     
@@ -27,7 +28,6 @@ void main() {
     // Final position
     // gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * viewPosition;
-
 
 
     // Varyings:
@@ -59,7 +59,7 @@ void main() {
     // For consistency with vFarPosition and vNearPosition offsets:
     //  
 
-    // For now until I sort the scaling issue:
+    // This is needed:
     vWorldPosition = (modelMatrix * vec4(position, 1.0)).xyz;
 
 }

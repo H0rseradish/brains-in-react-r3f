@@ -11,11 +11,11 @@ import { Panel, Slider, Button } from '@react-three/uikit-horizon'
 function BrainScaleSlider({ onValueChange }) {
 
     return (
-        <Slider min={0} max={500} step={50} width={'auto'} onValueChange={onValueChange} />
+        <Slider min={100} max={400} step={50} width={'auto'} onValueChange={onValueChange} />
     )
 }
 
-export default function UserControls({ store, onScaleChange })  {
+export default function UserControls({ store, onScaleChange, scale })  {
     //coPilot gave me these!: might come in handy - or not?
     // const { isPresenting } = useXR()
     // const controlsRef = useRef() 
@@ -26,7 +26,8 @@ export default function UserControls({ store, onScaleChange })  {
             width={300} 
             padding={ 20 } 
             positionTop={ 250 } 
-            backgroundColor="white"  flexDirection="column" 
+            backgroundColor="white"  
+            flexDirection="column" 
             justifyContent="center" 
             alignItems="center" 
         >
@@ -38,8 +39,7 @@ export default function UserControls({ store, onScaleChange })  {
                 }}
             />
 
-            <Text marginTop={ 0 } color="white" anchorX="center">
-                0% = life size
+            <Text marginTop={ 0 } color="white" anchorX="center">{`Scale: ${scale * 100}%`}
             </Text>
 
             <Button 

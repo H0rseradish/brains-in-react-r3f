@@ -30,7 +30,7 @@ const int REFINEMENT_STEPS = 4;
 // - I'm going to replace this variable when used in the code below with my scaleRelativeStepSize so I can put a user control that is passed in as the uniform(declared in main because only consts can be declared globally....
 // const float RELATIVE_STEP_SIZE = 0.1;
 
-const float RELATIVE_STEP_SIZE_FACTOR = 20.0; // fudge factor to make step size smaller than the volume scale factor, so that the render is not too sparse , but not too heavy either.
+const float RELATIVE_STEP_SIZE_FACTOR = 30.0; // fudge factor to make step size smaller than the volume scale factor, so that the render is not too sparse , but not too heavy either. This is being multiplied by the userscale
 
 //---------------
 // These could come in as uniforms or not at all ?:
@@ -92,15 +92,19 @@ void main() {
     // COMPUTE ENTRY/EXIT POINTS (OF BOX) USING PERSPECTIVE RAYS:
 
     // For PERSPECTIVE: Ray origin at near-plane intersection:
-    // vec3 rayOrigin = nearPosition;
     vec3 rayOrigin = cameraPosition;
-    // vec3 rayOrigin = rayOriginLocal + 0.5 * uVolumeDimensions;
     
+    // ALTERNATIVE but its inverted and not perspective?:
+    // vec3 rayOrigin = vNearPosition.xyz;
+
 
     // For PERSPECTIVE: Direction into the scene (towards the far-plane intersection):
-    // vec3 rayDirection = normalize(farPosition - nearPosition);
     vec3 rayDirection = normalize(vWorldPosition - cameraPosition);
-    // vec3 rayDirection = rayDirLocal;
+
+    // ALTERNATIVE: ok but its inverted and not perspective?:
+    // vec3 rayDirection = normalize(vFarPosition.xyz - vNearPosition.xyz);
+
+
 
 
     // For PERSPECTIVE: Compute intersection (slab method) of ray with the axis-aligned volume box [0, uVolumeScaledPhysicalSize]
